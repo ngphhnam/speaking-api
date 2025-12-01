@@ -1,0 +1,6 @@
+@SpeakingPractice.Api_HostAddress = http://localhost:5260
+
+GET {{SpeakingPractice.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
