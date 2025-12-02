@@ -1,0 +1,33 @@
+# Build output
+bin/
+obj/
+
+# IDE / tooling
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# Logs
+*.log
+
+# Visual Studio Code
+.vscode/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+
+# Rider / ReSharper
+.idea/
+_ReSharper.*/
+*.DotSettings.user
+
+# Others
+*.swp
+*.tmp
+*.bak
+
+
