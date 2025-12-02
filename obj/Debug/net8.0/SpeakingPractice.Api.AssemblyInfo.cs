@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SpeakingPractice.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c5c55776d0f2c5d8c8751cf6b0e066fbfff1f241")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ac1b4ad466df9e0191910cc2bc738f688e136eb1")]
 [assembly: System.Reflection.AssemblyProductAttribute("SpeakingPractice.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SpeakingPractice.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

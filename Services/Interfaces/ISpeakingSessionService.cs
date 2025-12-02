@@ -6,8 +6,6 @@ public interface ISpeakingSessionService
 {
     Task<SpeakingSessionDto> CreateSessionAsync(
         CreateSpeakingSessionRequest request,
-        Stream audioStream,
-        string fileName,
         Guid userId,
         CancellationToken ct);
 

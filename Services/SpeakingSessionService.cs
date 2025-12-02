@@ -18,86 +18,47 @@ public class SpeakingSessionService(
 {
     public async Task<SpeakingSessionDto> CreateSessionAsync(
         CreateSpeakingSessionRequest request,
-        Stream audioStream,
-        string fileName,
         Guid userId,
         CancellationToken ct)
     {
-        await using var memoryStream = new MemoryStream();
-        await audioStream.CopyToAsync(memoryStream, ct);
-        memoryStream.Position = 0;
+        var now = DateTimeOffset.UtcNow;
 
-        var objectName = $"audio/{DateTimeOffset.UtcNow:yyyyMMdd}/{Guid.NewGuid()}_{fileName}";
-        var audioUrl = await minioClient.UploadAudioAsync(memoryStream, objectName, userId, ct);
-
-        memoryStream.Position = 0;
-        var transcription = await whisperClient.TranscribeAsync(memoryStream, fileName, ct);
-
-        var llamaResult = await llamaClient.ScoreAsync(transcription.Text, "", request.Topic, request.Level, ct);
-        var grammarReport = await languageToolClient.CheckGrammarAsync(transcription.Text, ct);
-
-        // Create PracticeSession
         var session = new PracticeSession
         {
             Id = Guid.NewGuid(),
             UserId = userId,
+            TopicId = request.TopicId,
             SessionType = "practice",
-            Status = "completed",
-            StartedAt = DateTimeOffset.UtcNow,
-            CompletedAt = DateTimeOffset.UtcNow,
-            QuestionsAttempted = 1,
-            OverallBandScore = llamaResult.BandScore,
-            FluencyScore = llamaResult.FluencyScore,
-            VocabularyScore = llamaResult.VocabularyScore,
-            GrammarScore = llamaResult.GrammarScore,
-            PronunciationScore = llamaResult.PronunciationScore,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            Status = "in_progress",
+            QuestionsAttempted = 0,
+            StartedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         await sessionRepository.AddAsync(session, ct);
-
-        // Create Recording
-        var recording = new Recording
-        {
-            Id = Guid.NewGuid(),
-            SessionId = session.Id,
-            UserId = userId,
-            AudioUrl = audioUrl,
-            AudioFormat = Path.GetExtension(fileName).TrimStart('.'),
-            TranscriptionText = transcription.Text,
-            TranscriptionLanguage = transcription.Language ?? "en",
-            ProcessingStatus = "completed",
-            RecordedAt = DateTimeOffset.UtcNow,
-            ProcessedAt = DateTimeOffset.UtcNow,
-            CreatedAt = DateTimeOffset.UtcNow
-        };
-
-        await recordingRepository.AddAsync(recording, ct);
-
-        // Create AnalysisResult
-        var analysisResult = new AnalysisResult
-        {
-            Id = Guid.NewGuid(),
-            RecordingId = recording.Id,
-            UserId = userId,
-            OverallBandScore = llamaResult.BandScore,
-            FluencyScore = llamaResult.FluencyScore,
-            VocabularyScore = llamaResult.VocabularyScore,
-            GrammarScore = llamaResult.GrammarScore,
-            PronunciationScore = llamaResult.PronunciationScore,
-            Metrics = grammarReport.RawJson ?? "{}",
-            FeedbackSummary = llamaResult.OverallFeedback,
-            AnalyzedAt = DateTimeOffset.UtcNow,
-            CreatedAt = DateTimeOffset.UtcNow
-        };
-
-        await analysisResultRepository.AddAsync(analysisResult, ct);
         await sessionRepository.SaveChangesAsync(ct);
 
-        logger.LogInformation("Created practice session {SessionId} with recording {RecordingId}", session.Id, recording.Id);
+        logger.LogInformation("Created speaking practice session {SessionId} for user {UserId}", session.Id, userId);
 
-        return MapToDto(session, recording, analysisResult);
+        // Lúc mới tạo session chưa có recording/analysis, nên DTO trả về chủ yếu là meta
+        return new SpeakingSessionDto
+        {
+            Id = session.Id,
+            Topic = session.Topic?.Title ?? string.Empty,
+            Level = session.Topic?.DifficultyLevel ?? string.Empty,
+            AudioUrl = string.Empty,
+            TranscriptionText = null,
+            BandScore = null,
+            PronunciationScore = null,
+            GrammarScore = null,
+            VocabularyScore = null,
+            FluencyScore = null,
+            OverallFeedback = null,
+            GrammarReportJson = null,
+            CreatedAt = session.CreatedAt,
+            UpdatedAt = session.UpdatedAt
+        };
     }
 
     public async Task<IReadOnlyCollection<SpeakingSessionListItemDto>> GetUserSessionsAsync(Guid userId, CancellationToken ct)

@@ -12,8 +12,8 @@ using SpeakingPractice.Api.Infrastructure.Persistence;
 namespace SpeakingPractice.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251114110846_AddProgressTrackingAndVocabularyTables")]
-    partial class AddProgressTrackingAndVocabularyTables
+    [Migration("20251202104659_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -264,6 +264,10 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("analyzed_at");
 
+                    b.Property<string>("ComparisonAnalysis")
+                        .HasColumnType("text")
+                        .HasColumnName("comparison_analysis");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -319,6 +323,10 @@ namespace SpeakingPractice.Api.Migrations
                     b.Property<Guid>("RecordingId")
                         .HasColumnType("uuid")
                         .HasColumnName("recording_id");
+
+                    b.Property<string>("RefinementSuggestions")
+                        .HasColumnType("text")
+                        .HasColumnName("refinement_suggestions");
 
                     b.Property<string[]>("Strengths")
                         .HasColumnType("jsonb[]")
@@ -747,8 +755,8 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnName("attempts_count");
 
                     b.Property<decimal?>("AvgScore")
-                        .HasPrecision(2, 1)
-                        .HasColumnType("numeric(2,1)")
+                        .HasPrecision(3, 1)
+                        .HasColumnType("numeric(3,1)")
                         .HasColumnName("avg_score");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -756,8 +764,8 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<decimal?>("EstimatedBandRequirement")
-                        .HasPrecision(2, 1)
-                        .HasColumnType("numeric(2,1)")
+                        .HasPrecision(3, 1)
+                        .HasColumnType("numeric(3,1)")
                         .HasColumnName("estimated_band_requirement");
 
                     b.Property<bool>("IsActive")
@@ -767,7 +775,7 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnName("is_active");
 
                     b.Property<string[]>("KeyVocabulary")
-                        .HasColumnType("jsonb[]")
+                        .HasColumnType("text[]")
                         .HasColumnName("key_vocabulary");
 
                     b.Property<string>("QuestionText")
@@ -781,7 +789,7 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnName("question_type");
 
                     b.Property<string[]>("SampleAnswers")
-                        .HasColumnType("jsonb[]")
+                        .HasColumnType("text[]")
                         .HasColumnName("sample_answers");
 
                     b.Property<string>("SuggestedStructure")
@@ -865,6 +873,14 @@ namespace SpeakingPractice.Api.Migrations
                     b.Property<DateTimeOffset>("RecordedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("recorded_at");
+
+                    b.Property<string>("RefinedText")
+                        .HasColumnType("text")
+                        .HasColumnName("refined_text");
+
+                    b.Property<string>("RefinementMetadata")
+                        .HasColumnType("text")
+                        .HasColumnName("refinement_metadata");
 
                     b.Property<Guid>("SessionId")
                         .HasColumnType("uuid")
@@ -1079,6 +1095,51 @@ namespace SpeakingPractice.Api.Migrations
                         .HasDatabaseName("idx_user_achievements");
 
                     b.ToTable("user_achievements", (string)null);
+                });
+
+            modelBuilder.Entity("SpeakingPractice.Api.Domain.Entities.UserDraft", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DraftContent")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("draft_content");
+
+                    b.Property<string>("OutlineStructure")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("outline_structure");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("question_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_drafts");
+
+                    b.HasIndex("QuestionId")
+                        .HasDatabaseName("ix_user_drafts_question_id");
+
+                    b.HasIndex("UserId", "QuestionId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_drafts_user_id_question_id");
+
+                    b.ToTable("user_drafts", (string)null);
                 });
 
             modelBuilder.Entity("SpeakingPractice.Api.Domain.Entities.UserProgress", b =>
@@ -1554,6 +1615,27 @@ namespace SpeakingPractice.Api.Migrations
                         .HasConstraintName("fk_user_achievements_users_user_id");
 
                     b.Navigation("Achievement");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpeakingPractice.Api.Domain.Entities.UserDraft", b =>
+                {
+                    b.HasOne("SpeakingPractice.Api.Domain.Entities.Question", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_drafts_questions_question_id");
+
+                    b.HasOne("SpeakingPractice.Api.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_drafts_users_user_id");
+
+                    b.Navigation("Question");
 
                     b.Navigation("User");
                 });

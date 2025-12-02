@@ -7,8 +7,7 @@ public class CreateSpeakingSessionRequestValidator : AbstractValidator<CreateSpe
 {
     public CreateSpeakingSessionRequestValidator()
     {
-        RuleFor(x => x.Topic).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Level).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.TopicId).NotEmpty();
     }
 }
 

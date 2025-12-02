@@ -8,34 +8,24 @@ namespace SpeakingPractice.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/[controller]")]
+[Route("api/session/speaking-session")]
 public class SpeakingSessionsController(
     ISpeakingSessionService speakingSessionService,
     ILogger<SpeakingSessionsController> logger) : ControllerBase
 {
     [HttpPost]
-    [RequestSizeLimit(100_000_000)]
     public async Task<IActionResult> Create(
-        [FromForm] CreateSpeakingSessionRequest request,
-        [FromForm] IFormFile audio,
+        [FromBody] CreateSpeakingSessionRequest request,
         CancellationToken ct)
     {
-        if (audio is null || audio.Length == 0)
-        {
-            return BadRequest("Audio file is required.");
-        }
-
         var userId = GetUserId();
         if (userId is null)
         {
             return Unauthorized();
         }
 
-        await using var stream = audio.OpenReadStream();
         var result = await speakingSessionService.CreateSessionAsync(
             request,
-            stream,
-            audio.FileName,
             userId.Value,
             ct);
 
