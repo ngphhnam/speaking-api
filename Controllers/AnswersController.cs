@@ -1,11 +1,15 @@
 using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.Domain.Entities;
+using SpeakingPractice.Api.DTOs.AI;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.SpeakingSessions;
 using SpeakingPractice.Api.Infrastructure.Clients;
 using SpeakingPractice.Api.Infrastructure.Exceptions;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -17,10 +21,10 @@ public class AnswersController(
     IMinioClientWrapper minioClient,
     IWhisperClient whisperClient,
     ILlamaClient llamaClient,
-    ILanguageToolClient languageToolClient,
     IRecordingRepository recordingRepository,
     IAnalysisResultRepository analysisResultRepository,
     ISpeakingSessionRepository speakingSessionRepository,
+    UserManager<ApplicationUser> userManager,
     ILogger<AnswersController> logger) : ControllerBase
 {
     [HttpPost("submit")]
@@ -32,23 +36,34 @@ public class AnswersController(
     {
         if (audio is null || audio.Length == 0)
         {
-            return BadRequest("Audio file is required.");
+            return this.ApiBadRequest(ErrorCodes.FILE_REQUIRED, "Audio file is required");
         }
 
         // Get question
         var question = await questionRepository.GetByIdAsync(questionId, ct);
         if (question is null)
         {
-            return NotFound($"Question with id {questionId} not found");
+            return this.ApiNotFound(ErrorCodes.QUESTION_NOT_FOUND, $"Question with id {questionId} not found");
         }
 
         if (!question.IsActive)
         {
-            return BadRequest("Question is not active");
+            return this.ApiBadRequest(ErrorCodes.QUESTION_NOT_ACTIVE, "Question is not active");
         }
 
-        // Get user ID (allow anonymous with Guid.Empty)
-        var userId = GetUserId() ?? Guid.Empty;
+        // Get user ID and verify user exists
+        var userIdClaim = GetUserId();
+        if (userIdClaim is null)
+        {
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var userId = userIdClaim.Value;
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not found");
+        }
 
         try
         {
@@ -77,8 +92,21 @@ public class AnswersController(
                 level, 
                 ct);
 
-            // Check grammar
-            var grammarReport = await languageToolClient.CheckGrammarAsync(transcription.Text, ct);
+            // Correct grammar (optional - continue if it fails)
+            GrammarCorrectionResult? grammarCorrection = null;
+            try
+            {
+                grammarCorrection = await llamaClient.CorrectGrammarAsync(
+                    transcription.Text,
+                    transcription.Language ?? "en",
+                    question.QuestionText,
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Grammar correction failed for question {QuestionId}, continuing without correction", questionId);
+                // Continue without grammar correction - use original transcription
+            }
 
             // Create practice session for this attempt so recordings satisfy FK constraints
             var sessionTimestamp = DateTimeOffset.UtcNow;
@@ -115,6 +143,7 @@ public class AnswersController(
                 FileSizeBytes = audio.Length,
                 TranscriptionText = transcription.Text,
                 TranscriptionLanguage = transcription.Language ?? "en",
+                RefinedText = grammarCorrection?.Corrected,
                 ProcessingStatus = "completed",
                 RecordedAt = DateTimeOffset.UtcNow,
                 ProcessedAt = DateTimeOffset.UtcNow,
@@ -135,7 +164,18 @@ public class AnswersController(
                 GrammarScore = llamaResult.GrammarScore,
                 PronunciationScore = llamaResult.PronunciationScore,
                 FeedbackSummary = llamaResult.OverallFeedback,
-                Metrics = grammarReport.RawJson ?? "{}",
+                Metrics = grammarCorrection != null 
+                    ? System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        grammarCorrection = new
+                        {
+                            original = grammarCorrection.Original,
+                            corrected = grammarCorrection.Corrected,
+                            corrections = grammarCorrection.Corrections,
+                            explanation = grammarCorrection.Explanation
+                        }
+                    })
+                    : "{}",
                 AnalyzedAt = DateTimeOffset.UtcNow,
                 CreatedAt = DateTimeOffset.UtcNow
             };
@@ -154,11 +194,12 @@ public class AnswersController(
 
             logger.LogInformation("Submitted answer for question {QuestionId}, score: {Score}", questionId, llamaResult.BandScore);
 
-            return Ok(new
+            var responseData = new
             {
                 recordingId = recording.Id,
                 analysisResultId = analysisResult.Id,
                 transcription = transcription.Text,
+                correctedTranscription = grammarCorrection?.Corrected,
                 scores = new
                 {
                     overallBandScore = llamaResult.BandScore,
@@ -168,31 +209,33 @@ public class AnswersController(
                     pronunciationScore = llamaResult.PronunciationScore
                 },
                 feedback = llamaResult.OverallFeedback,
-                grammarReport = grammarReport.Summary,
+                grammarCorrection = grammarCorrection != null ? new
+                {
+                    original = grammarCorrection.Original,
+                    corrected = grammarCorrection.Corrected,
+                    corrections = grammarCorrection.Corrections,
+                    explanation = grammarCorrection.Explanation
+                } : null,
                 sampleAnswers = question.SampleAnswers,
                 keyVocabulary = question.KeyVocabulary
-            });
+            };
+
+            return this.ApiOk(responseData, "Answer submitted successfully");
         }
         catch (ExternalServiceUnavailableException ex)
         {
             logger.LogWarning(ex, "Scoring service unavailable for question {QuestionId}", questionId);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
-            {
-                error = "Scoring service is temporarily unavailable. Please try again later."
-            });
+            return this.ApiStatusCode(StatusCodes.Status503ServiceUnavailable, ErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE, "Scoring service is temporarily unavailable. Please try again later.");
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.ServiceUnavailable)
         {
             logger.LogWarning(ex, "Downstream service unavailable for question {QuestionId}", questionId);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
-            {
-                error = "Downstream service is temporarily unavailable. Please try again later."
-            });
+            return this.ApiStatusCode(StatusCodes.Status503ServiceUnavailable, ErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE, "Downstream service is temporarily unavailable. Please try again later.");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error processing answer for question {QuestionId}", questionId);
-            return StatusCode(500, new { error = "An error occurred while processing your answer", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "An error occurred while processing your answer", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 

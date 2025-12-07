@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -34,7 +36,7 @@ public class ApiUsageLogController(
             logs = await apiUsageLogRepository.GetAllAsync(page, pageSize, ct);
         }
 
-        return Ok(logs.Select(log => new
+        return this.ApiOk(logs.Select(log => new
         {
             log.Id,
             log.UserId,
@@ -47,14 +49,14 @@ public class ApiUsageLogController(
             log.StatusCode,
             log.ErrorMessage,
             log.CreatedAt
-        }));
+        }), "API usage logs retrieved successfully");
     }
 
     [HttpGet("service/{serviceName}")]
     public async Task<IActionResult> GetByService(string serviceName, CancellationToken ct = default)
     {
         var logs = await apiUsageLogRepository.GetByServiceAsync(serviceName, ct);
-        return Ok(logs.Select(log => new
+        return this.ApiOk(logs.Select(log => new
         {
             log.Id,
             log.UserId,
@@ -67,14 +69,14 @@ public class ApiUsageLogController(
             log.StatusCode,
             log.ErrorMessage,
             log.CreatedAt
-        }));
+        }), "API usage logs retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}")]
     public async Task<IActionResult> GetByUserId(Guid userId, CancellationToken ct = default)
     {
         var logs = await apiUsageLogRepository.GetByUserIdAsync(userId, ct);
-        return Ok(logs.Select(log => new
+        return this.ApiOk(logs.Select(log => new
         {
             log.Id,
             log.UserId,
@@ -87,7 +89,7 @@ public class ApiUsageLogController(
             log.StatusCode,
             log.ErrorMessage,
             log.CreatedAt
-        }));
+        }), "API usage logs retrieved successfully");
     }
 
     [HttpGet("statistics")]
@@ -112,7 +114,7 @@ public class ApiUsageLogController(
             })
         };
 
-        return Ok(statistics);
+        return this.ApiOk(statistics, "Statistics retrieved successfully");
     }
 
     [HttpGet("costs")]
@@ -145,7 +147,7 @@ public class ApiUsageLogController(
                 .OrderByDescending(x => x.Date)
         };
 
-        return Ok(costs);
+        return this.ApiOk(costs, "Costs retrieved successfully");
     }
 }
 

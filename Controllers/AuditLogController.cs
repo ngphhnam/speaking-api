@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -35,7 +37,7 @@ public class AuditLogController(
             logs = await auditLogRepository.GetAllAsync(page, pageSize, ct);
         }
 
-        return Ok(logs.Select(log => new
+        return this.ApiOk(logs.Select(log => new
         {
             log.Id,
             log.UserId,
@@ -47,14 +49,14 @@ public class AuditLogController(
             log.IpAddress,
             log.UserAgent,
             log.CreatedAt
-        }));
+        }), "Audit logs retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}")]
     public async Task<IActionResult> GetByUserId(Guid userId, CancellationToken ct = default)
     {
         var logs = await auditLogRepository.GetByUserIdAsync(userId, ct);
-        return Ok(logs.Select(log => new
+        return this.ApiOk(logs.Select(log => new
         {
             log.Id,
             log.UserId,
@@ -66,14 +68,14 @@ public class AuditLogController(
             log.IpAddress,
             log.UserAgent,
             log.CreatedAt
-        }));
+        }), "Audit logs retrieved successfully");
     }
 
     [HttpGet("entity/{entityType}/{entityId:guid}")]
     public async Task<IActionResult> GetByEntity(string entityType, Guid entityId, CancellationToken ct = default)
     {
         var logs = await auditLogRepository.GetByEntityAsync(entityType, entityId, ct);
-        return Ok(logs.Select(log => new
+        return this.ApiOk(logs.Select(log => new
         {
             log.Id,
             log.UserId,
@@ -85,7 +87,7 @@ public class AuditLogController(
             log.IpAddress,
             log.UserAgent,
             log.CreatedAt
-        }));
+        }), "Audit logs retrieved successfully");
     }
 }
 

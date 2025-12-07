@@ -101,6 +101,21 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = jwtOptions.Audience,
             IssuerSigningKey = signingKey
         };
+
+        // Allow JWT to be read from the accessToken cookie for browser-based clients
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (string.IsNullOrEmpty(context.Token) &&
+                    context.Request.Cookies.TryGetValue("accessToken", out var token))
+                {
+                    context.Token = token;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -125,6 +140,8 @@ builder.Services.AddHttpClient<ILlamaClient, LlamaClient>((sp, client) =>
 {
     var options = sp.GetRequiredService<IOptions<LlamaOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl);
+    // Increase timeout for grammar correction which can take 12+ seconds
+    client.Timeout = TimeSpan.FromSeconds(60);
 });
 builder.Services.AddHttpClient<ILanguageToolClient, LanguageToolClient>((sp, client) =>
 {

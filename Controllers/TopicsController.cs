@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.Domain.Entities;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.Generation;
 using SpeakingPractice.Api.DTOs.Topics;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 using SpeakingPractice.Api.Services.Interfaces;
 using System.Text.RegularExpressions;
@@ -40,7 +42,7 @@ public class TopicsController(
         }
 
         var dtos = topics.Select(t => MapToDto(t));
-        return Ok(dtos);
+        return this.ApiOk(dtos, "Topics retrieved successfully");
     }
 
     [HttpGet("{id:guid}")]
@@ -49,10 +51,10 @@ public class TopicsController(
         var topic = await topicRepository.GetByIdAsync(id, ct);
         if (topic is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.TOPIC_NOT_FOUND, $"Topic with id {id} not found");
         }
 
-        return Ok(MapToDto(topic));
+        return this.ApiOk(MapToDto(topic), "Topic retrieved successfully");
     }
 
     [HttpGet("slug/{slug}")]
@@ -76,7 +78,7 @@ public class TopicsController(
         var existing = await topicRepository.GetBySlugAsync(slug, ct);
         if (existing is not null)
         {
-            return Conflict($"Topic with slug '{slug}' already exists");
+            return this.ApiStatusCode(409, ErrorCodes.UNIQUE_CONSTRAINT_VIOLATION, $"Topic with slug '{slug}' already exists");
         }
 
         var topic = new Topic
@@ -96,7 +98,7 @@ public class TopicsController(
         await topicRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Created topic {TopicId} with slug {Slug}", topic.Id, slug);
-        return CreatedAtAction(nameof(GetById), new { id = topic.Id }, MapToDto(topic));
+        return this.ApiCreated(nameof(GetById), new { id = topic.Id }, MapToDto(topic), "Topic created successfully");
     }
 
     [HttpPut("{id:guid}")]
@@ -126,7 +128,7 @@ public class TopicsController(
         await topicRepository.UpdateAsync(topic, ct);
         await topicRepository.SaveChangesAsync(ct);
 
-        return Ok(MapToDto(topic));
+        return this.ApiOk(MapToDto(topic), "Topic updated successfully");
     }
 
     [HttpDelete("{id:guid}")]
@@ -142,7 +144,7 @@ public class TopicsController(
         await topicRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Deleted topic {TopicId}", id);
-        return NoContent();
+        return this.ApiOk("Topic deleted successfully");
     }
 
     [HttpPost("generate")]
@@ -151,12 +153,12 @@ public class TopicsController(
         try
         {
             var topics = await contentGenerationService.GenerateTopicsAsync(request, ct);
-            return Ok(topics);
+            return this.ApiOk(topics, "Topics generated successfully");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error generating topics");
-            return StatusCode(500, new { error = "Failed to generate topics", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to generate topics", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -166,12 +168,12 @@ public class TopicsController(
         try
         {
             var topic = await contentGenerationService.GenerateTopicWithQuestionsAsync(request, ct);
-            return Ok(topic);
+            return this.ApiOk(topic, "Topic with questions generated successfully");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error generating topic with questions");
-            return StatusCode(500, new { error = "Failed to generate topic with questions", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to generate topic with questions", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -190,7 +192,7 @@ public class TopicsController(
             .Distinct()
             .ToList() ?? new List<string>();
 
-        return Ok(new { vocabulary = allVocabulary });
+        return this.ApiOk(new { vocabulary = allVocabulary }, "Vocabulary retrieved successfully");
     }
 
     [HttpGet("{id:guid}/statistics")]
@@ -214,7 +216,7 @@ public class TopicsController(
             AvgScore = topic.Questions?.Where(q => q.AvgScore.HasValue).Average(q => q.AvgScore!.Value)
         };
 
-        return Ok(statistics);
+        return this.ApiOk(statistics, "Statistics retrieved successfully");
     }
 
     [HttpGet("popular")]
@@ -228,7 +230,7 @@ public class TopicsController(
             .Take(limit)
             .Select(MapToDto);
 
-        return Ok(popular);
+        return this.ApiOk(popular, "Popular topics retrieved successfully");
     }
 
     [HttpGet("recommended")]
@@ -244,7 +246,7 @@ public class TopicsController(
             .Take(10)
             .Select(MapToDto);
 
-        return Ok(recommended);
+        return this.ApiOk(recommended, "Recommended topics retrieved successfully");
     }
 
     [HttpPost("{id:guid}/rate")]
@@ -259,7 +261,7 @@ public class TopicsController(
 
         if (request.Rating < 1 || request.Rating > 5)
         {
-            return BadRequest("Rating must be between 1 and 5");
+            return this.ApiBadRequest(ErrorCodes.INVALID_VALUE, "Rating must be between 1 and 5");
         }
 
         // Update average rating
@@ -274,7 +276,7 @@ public class TopicsController(
         await topicRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Topic {TopicId} rated {Rating}", id, request.Rating);
-        return Ok(new { avgRating = topic.AvgUserRating, totalRatings = topic.UsageCount });
+        return this.ApiOk(new { avgRating = topic.AvgUserRating, totalRatings = topic.UsageCount }, "Topic rated successfully");
     }
 
     private static TopicDto MapToDto(Topic topic)

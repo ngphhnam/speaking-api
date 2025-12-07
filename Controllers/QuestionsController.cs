@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.Domain.Entities;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.Drafts;
 using SpeakingPractice.Api.DTOs.Generation;
 using SpeakingPractice.Api.DTOs.Questions;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 using SpeakingPractice.Api.Services.Interfaces;
 
@@ -37,7 +39,7 @@ public class QuestionsController(
         }
 
         var dtos = questions.Select(q => MapToDto(q));
-        return Ok(dtos);
+        return this.ApiOk(dtos, "Questions retrieved successfully");
     }
 
     [HttpGet("{id:guid}")]
@@ -46,10 +48,10 @@ public class QuestionsController(
         var question = await questionRepository.GetByIdAsync(id, ct);
         if (question is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.QUESTION_NOT_FOUND, $"Question with id {id} not found");
         }
 
-        return Ok(MapToDto(question));
+        return this.ApiOk(MapToDto(question), "Question retrieved successfully");
     }
 
     [HttpPost]
@@ -63,7 +65,7 @@ public class QuestionsController(
                 var topic = await topicRepository.GetByIdAsync(request.TopicId.Value, ct);
                 if (topic is null)
                 {
-                    return BadRequest($"Topic with id {request.TopicId} not found");
+                    return this.ApiBadRequest(ErrorCodes.TOPIC_NOT_FOUND, $"Topic with id {request.TopicId} not found");
                 }
             }
 
@@ -71,12 +73,9 @@ public class QuestionsController(
             {
                 TopicId = request.TopicId,
                 QuestionText = request.QuestionText,
-                QuestionType = request.QuestionType,
                 SuggestedStructure = request.SuggestedStructure,
                 SampleAnswers = request.SampleAnswers,
                 KeyVocabulary = request.KeyVocabulary,
-                EstimatedBandRequirement = request.EstimatedBandRequirement,
-                TimeLimitSeconds = request.TimeLimitSeconds,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
@@ -85,16 +84,15 @@ public class QuestionsController(
             await questionRepository.SaveChangesAsync(ct);
 
             logger.LogInformation("Created question {QuestionId}", question.Id);
-            return CreatedAtAction(nameof(GetById), new { id = question.Id }, MapToDto(question));
+            return this.ApiCreated(nameof(GetById), new { id = question.Id }, MapToDto(question), "Question created successfully");
         }
         catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
         {
             logger.LogError(ex, "Database error creating question. Inner exception: {InnerException}", ex.InnerException?.Message);
-            return StatusCode(500, new
-            {
-                error = "An error occurred while saving the question.",
-                details = ex.InnerException?.Message ?? ex.Message,
-                traceId = HttpContext.TraceIdentifier
+            return this.ApiInternalServerError(ErrorCodes.DATABASE_ERROR, "An error occurred while saving the question", new Dictionary<string, object> 
+            { 
+                { "details", ex.InnerException?.Message ?? ex.Message },
+                { "traceId", HttpContext.TraceIdentifier }
             });
         }
     }
@@ -105,7 +103,7 @@ public class QuestionsController(
         var question = await questionRepository.GetByIdAsync(id, ct);
         if (question is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.QUESTION_NOT_FOUND, $"Question with id {id} not found");
         }
 
         // Validate topic exists if provided
@@ -114,7 +112,7 @@ public class QuestionsController(
             var topic = await topicRepository.GetByIdAsync(request.TopicId.Value, ct);
             if (topic is null)
             {
-                return BadRequest($"Topic with id {request.TopicId} not found");
+                return this.ApiBadRequest(ErrorCodes.TOPIC_NOT_FOUND, $"Topic with id {request.TopicId} not found");
             }
         }
 
@@ -133,7 +131,7 @@ public class QuestionsController(
         await questionRepository.UpdateAsync(question, ct);
         await questionRepository.SaveChangesAsync(ct);
 
-        return Ok(MapToDto(question));
+        return this.ApiOk(MapToDto(question), "Question updated successfully");
     }
 
     [HttpDelete("{id:guid}")]
@@ -149,7 +147,7 @@ public class QuestionsController(
         await questionRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Deleted question {QuestionId}", id);
-        return NoContent();
+        return this.ApiOk("Question deleted successfully");
     }
 
     [HttpPost("generate")]
@@ -158,12 +156,12 @@ public class QuestionsController(
         try
         {
             var questions = await contentGenerationService.GenerateQuestionsAsync(request, ct);
-            return Ok(questions);
+            return this.ApiOk(questions, "Questions generated successfully");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error generating questions");
-            return StatusCode(500, new { error = "Failed to generate questions", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to generate questions", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -174,12 +172,12 @@ public class QuestionsController(
         {
             request ??= new GenerateOutlineRequest();
             var outline = await contentGenerationService.GenerateOutlineAsync(id, request, ct);
-            return Ok(outline);
+            return this.ApiOk(outline, "Outline generated successfully");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error generating outline for question {QuestionId}", id);
-            return StatusCode(500, new { error = "Failed to generate outline", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to generate outline", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -189,7 +187,7 @@ public class QuestionsController(
         var question = await questionRepository.GetByIdAsync(id, ct);
         if (question is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.QUESTION_NOT_FOUND, $"Question with id {id} not found");
         }
 
         // Return existing vocabulary or generate enhanced version
@@ -208,7 +206,7 @@ public class QuestionsController(
             Collocations = Array.Empty<string>()
         };
 
-        return Ok(vocabulary);
+        return this.ApiOk(vocabulary, "Vocabulary retrieved successfully");
     }
 
     [HttpPost("{id:guid}/vocabulary/enhance")]
@@ -218,12 +216,12 @@ public class QuestionsController(
         {
             request ??= new GenerateVocabularyRequest();
             var vocabulary = await contentGenerationService.GenerateVocabularyAsync(id, request, ct);
-            return Ok(vocabulary);
+            return this.ApiOk(vocabulary, "Vocabulary enhanced successfully");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error enhancing vocabulary for question {QuestionId}", id);
-            return StatusCode(500, new { error = "Failed to enhance vocabulary", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to enhance vocabulary", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -233,7 +231,7 @@ public class QuestionsController(
         var question = await questionRepository.GetByIdAsync(id, ct);
         if (question is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.QUESTION_NOT_FOUND, $"Question with id {id} not found");
         }
 
         // Parse suggested structure if available
@@ -255,7 +253,7 @@ public class QuestionsController(
             });
         }
 
-        return Ok(structures);
+        return this.ApiOk(structures, "Structures retrieved successfully");
     }
 
     [HttpPost("{id:guid}/structures/generate")]
@@ -265,12 +263,12 @@ public class QuestionsController(
         {
             request ??= new GenerateStructuresRequest();
             var structures = await contentGenerationService.GenerateStructuresAsync(id, request, ct);
-            return Ok(structures);
+            return this.ApiOk(structures, "Structures generated successfully");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error generating structures for question {QuestionId}", id);
-            return StatusCode(500, new { error = "Failed to generate structures", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to generate structures", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -300,7 +298,7 @@ public class QuestionsController(
                 .ToList() ?? new List<SampleAnswer>()
         };
 
-        return Ok(sampleAnswers);
+        return this.ApiOk(sampleAnswers, "Sample answers retrieved successfully");
     }
 
     [HttpPost("{id:guid}/drafts")]
@@ -312,12 +310,12 @@ public class QuestionsController(
             // In production, get from authenticated user
             var userId = Guid.Empty; // TODO: Get from authenticated user
             var draft = await draftService.SaveDraftAsync(userId, id, request, ct);
-            return Ok(draft);
+            return this.ApiOk(draft, "Draft saved successfully");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error saving draft for question {QuestionId}", id);
-            return StatusCode(500, new { error = "Failed to save draft", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to save draft", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -331,14 +329,14 @@ public class QuestionsController(
             var draft = await draftService.GetDraftAsync(userId, id, ct);
             if (draft == null)
             {
-                return NotFound();
+                return this.ApiNotFound(ErrorCodes.NOT_FOUND, "Draft not found");
             }
-            return Ok(draft);
+            return this.ApiOk(draft, "Draft retrieved successfully");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting draft for question {QuestionId}", id);
-            return StatusCode(500, new { error = "Failed to get draft", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to get draft", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -349,7 +347,7 @@ public class QuestionsController(
         var question = await questionRepository.GetByIdAsync(id, ct);
         if (question is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.QUESTION_NOT_FOUND, $"Question with id {id} not found");
         }
 
         var statistics = new
@@ -360,7 +358,7 @@ public class QuestionsController(
             IsActive = question.IsActive
         };
 
-        return Ok(statistics);
+        return this.ApiOk(statistics, "Statistics retrieved successfully");
     }
 
     [HttpGet("popular")]
@@ -374,7 +372,7 @@ public class QuestionsController(
             .Take(limit)
             .Select(MapToDto);
 
-        return Ok(popular);
+        return this.ApiOk(popular, "Popular questions retrieved successfully");
     }
 
     [HttpGet("recommended")]
@@ -389,7 +387,7 @@ public class QuestionsController(
             .Take(10)
             .Select(MapToDto);
 
-        return Ok(recommended);
+        return this.ApiOk(recommended, "Recommended questions retrieved successfully");
     }
 
     [HttpGet("topic/{topicId:guid}/random")]
@@ -401,13 +399,13 @@ public class QuestionsController(
 
         if (!activeQuestions.Any())
         {
-            return NotFound("No active questions found for this topic");
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, "No active questions found for this topic");
         }
 
         var random = new Random();
         var randomQuestion = activeQuestions[random.Next(activeQuestions.Count)];
 
-        return Ok(MapToDto(randomQuestion));
+        return this.ApiOk(MapToDto(randomQuestion), "Random question retrieved successfully");
     }
 
     private static QuestionDto MapToDto(Question question)

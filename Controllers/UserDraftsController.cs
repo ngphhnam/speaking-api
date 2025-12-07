@@ -2,7 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.Drafts;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Infrastructure.Persistence;
 using SpeakingPractice.Api.Repositories;
 
@@ -23,12 +25,12 @@ public class UserDraftsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var drafts = await context.UserDrafts
@@ -36,7 +38,7 @@ public class UserDraftsController(
             .OrderByDescending(d => d.UpdatedAt)
             .ToListAsync(ct);
 
-        return Ok(drafts.Select(MapToDto));
+        return this.ApiOk(drafts.Select(MapToDto), "Drafts retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/question/{questionId:guid}")]
@@ -45,21 +47,21 @@ public class UserDraftsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var draft = await userDraftRepository.GetByUserAndQuestionAsync(userId, questionId, ct);
         if (draft is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, "Draft not found");
         }
 
-        return Ok(MapToDto(draft));
+        return this.ApiOk(MapToDto(draft), "Draft retrieved successfully");
     }
 
     [HttpGet("{id:guid}")]
@@ -70,21 +72,21 @@ public class UserDraftsController(
         
         if (draft is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"Draft with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (draft.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
-        return Ok(MapToDto(draft));
+        return this.ApiOk(MapToDto(draft), "Draft retrieved successfully");
     }
 
     [HttpPost]
@@ -99,7 +101,7 @@ public class UserDraftsController(
         var question = await questionRepository.GetByIdAsync(request.QuestionId, ct);
         if (question is null)
         {
-            return NotFound("Question not found");
+            return this.ApiNotFound(ErrorCodes.QUESTION_NOT_FOUND, "Question not found");
         }
 
         var existing = await userDraftRepository.GetByUserAndQuestionAsync(userId.Value, request.QuestionId, ct);
@@ -115,7 +117,7 @@ public class UserDraftsController(
             await userDraftRepository.SaveChangesAsync(ct);
 
             logger.LogInformation("Updated draft {DraftId} for user {UserId}", existing.Id, userId);
-            return Ok(MapToDto(existing));
+            return this.ApiOk(MapToDto(existing), "Draft updated successfully");
         }
 
         // Create new draft
@@ -133,7 +135,7 @@ public class UserDraftsController(
         await userDraftRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Created draft {DraftId} for user {UserId}", draft.Id, userId);
-        return CreatedAtAction(nameof(GetById), new { id = draft.Id }, MapToDto(draft));
+        return this.ApiCreated(nameof(GetById), new { id = draft.Id }, MapToDto(draft), "Draft created successfully");
     }
 
     [HttpPut("{id:guid}")]
@@ -142,18 +144,18 @@ public class UserDraftsController(
         var draft = await userDraftRepository.GetByIdAsync(id, ct);
         if (draft is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"Draft with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (draft.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         draft.DraftContent = request.DraftContent;
@@ -163,7 +165,7 @@ public class UserDraftsController(
         await userDraftRepository.UpdateAsync(draft, ct);
         await userDraftRepository.SaveChangesAsync(ct);
 
-        return Ok(MapToDto(draft));
+        return this.ApiOk(MapToDto(draft), "Draft retrieved successfully");
     }
 
     [HttpDelete("{id:guid}")]
@@ -172,25 +174,25 @@ public class UserDraftsController(
         var draft = await userDraftRepository.GetByIdAsync(id, ct);
         if (draft is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"Draft with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (draft.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         await userDraftRepository.DeleteAsync(draft, ct);
         await userDraftRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Deleted draft {DraftId}", id);
-        return NoContent();
+        return this.ApiOk("Draft deleted successfully");
     }
 
     private Guid? GetUserId()

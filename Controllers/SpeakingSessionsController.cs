@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.SpeakingSessions;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Services.Interfaces;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -21,16 +23,29 @@ public class SpeakingSessionsController(
         var userId = GetUserId();
         if (userId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
-        var result = await speakingSessionService.CreateSessionAsync(
-            request,
-            userId.Value,
-            ct);
+        try
+        {
+            var result = await speakingSessionService.CreateSessionAsync(
+                request,
+                userId.Value,
+                ct);
 
-        logger.LogInformation("User {UserId} created speaking session {SessionId}", userId, result.Id);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+            logger.LogInformation("User {UserId} created speaking session {SessionId}", userId, result.Id);
+            return this.ApiCreated(nameof(GetById), new { id = result.Id }, result, "Session created successfully");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogWarning(ex, "Unauthorized access for user {UserId}", userId);
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating session for user {UserId}", userId);
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to create session");
+        }
     }
 
     [HttpGet]
@@ -39,14 +54,14 @@ public class SpeakingSessionsController(
         var requesterId = GetUserId();
         if (requesterId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         var isAdmin = User.IsInRole("Admin");
         var targetUserId = isAdmin && userId.HasValue ? userId.Value : requesterId.Value;
 
         var sessions = await speakingSessionService.GetUserSessionsAsync(targetUserId, ct);
-        return Ok(sessions);
+        return this.ApiOk(sessions, "Sessions retrieved successfully");
     }
 
     [HttpGet("{id:guid}")]
@@ -55,16 +70,16 @@ public class SpeakingSessionsController(
         var requesterId = GetUserId();
         if (requesterId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         var session = await speakingSessionService.GetByIdAsync(id, requesterId.Value, User.IsInRole("Admin"), ct);
         if (session is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.SESSION_NOT_FOUND, $"Session with id {id} not found");
         }
 
-        return Ok(session);
+        return this.ApiOk(session, "Session retrieved successfully");
     }
 
     [HttpPut("{id:guid}")]
@@ -73,13 +88,13 @@ public class SpeakingSessionsController(
         var requesterId = GetUserId();
         if (requesterId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         var session = await speakingSessionService.GetByIdAsync(id, requesterId.Value, User.IsInRole("Admin"), ct);
         if (session is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.SESSION_NOT_FOUND, $"Session with id {id} not found");
         }
 
         // Update session status or completion
@@ -89,7 +104,7 @@ public class SpeakingSessionsController(
             logger.LogInformation("Updating session {SessionId}", id);
         }
 
-        return Ok(session);
+        return this.ApiOk(session, "Session updated successfully");
     }
 
     [HttpDelete("{id:guid}")]
@@ -98,18 +113,18 @@ public class SpeakingSessionsController(
         var requesterId = GetUserId();
         if (requesterId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         var session = await speakingSessionService.GetByIdAsync(id, requesterId.Value, User.IsInRole("Admin"), ct);
         if (session is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.SESSION_NOT_FOUND, $"Session with id {id} not found");
         }
 
         // Implementation would delete session
         logger.LogInformation("Deleting session {SessionId}", id);
-        return NoContent();
+        return this.ApiOk("Session deleted successfully");
     }
 
     [HttpPost("{id:guid}/complete")]
@@ -118,18 +133,18 @@ public class SpeakingSessionsController(
         var requesterId = GetUserId();
         if (requesterId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         var session = await speakingSessionService.GetByIdAsync(id, requesterId.Value, User.IsInRole("Admin"), ct);
         if (session is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.SESSION_NOT_FOUND, $"Session with id {id} not found");
         }
 
         // Implementation would mark session as completed
         logger.LogInformation("Completing session {SessionId}", id);
-        return Ok(session);
+        return this.ApiOk(session, "Session completed successfully");
     }
 
     [HttpGet("user/{userId:guid}/statistics")]
@@ -138,12 +153,12 @@ public class SpeakingSessionsController(
         var requesterId = GetUserId();
         if (requesterId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var sessions = await speakingSessionService.GetUserSessionsAsync(userId, ct);
@@ -164,7 +179,7 @@ public class SpeakingSessionsController(
                 .Average()
         };
 
-        return Ok(statistics);
+        return this.ApiOk(statistics, "Statistics retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/active")]
@@ -173,17 +188,17 @@ public class SpeakingSessionsController(
         var requesterId = GetUserId();
         if (requesterId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var sessions = await speakingSessionService.GetUserSessionsAsync(userId, ct);
         var activeSessions = sessions.Where(s => s.Status == "in_progress");
-        return Ok(activeSessions);
+        return this.ApiOk(activeSessions, "Active sessions retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/completed")]
@@ -192,17 +207,17 @@ public class SpeakingSessionsController(
         var requesterId = GetUserId();
         if (requesterId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var sessions = await speakingSessionService.GetUserSessionsAsync(userId, ct);
         var completedSessions = sessions.Where(s => s.Status == "completed");
-        return Ok(completedSessions);
+        return this.ApiOk(completedSessions, "Completed sessions retrieved successfully");
     }
 
     private Guid? GetUserId()

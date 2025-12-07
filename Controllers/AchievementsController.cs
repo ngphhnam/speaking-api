@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.DTOs.Achievements;
+using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -16,7 +18,7 @@ public class AchievementsController(
     public async Task<IActionResult> GetAll(CancellationToken ct = default)
     {
         var achievements = await achievementRepository.GetAllAsync(ct);
-        return Ok(achievements.Select(MapToDto));
+        return this.ApiOk(achievements.Select(MapToDto), "Achievements retrieved successfully");
     }
 
     [HttpGet("{id:guid}")]
@@ -26,10 +28,10 @@ public class AchievementsController(
         var achievement = await achievementRepository.GetByIdAsync(id, ct);
         if (achievement is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"Achievement with id {id} not found");
         }
 
-        return Ok(MapToDto(achievement));
+        return this.ApiOk(MapToDto(achievement), "Achievement retrieved successfully");
     }
 
     [HttpGet("active")]
@@ -37,7 +39,7 @@ public class AchievementsController(
     public async Task<IActionResult> GetActive(CancellationToken ct = default)
     {
         var achievements = await achievementRepository.GetActiveAsync(ct);
-        return Ok(achievements.Select(MapToDto));
+        return this.ApiOk(achievements.Select(MapToDto), "Active achievements retrieved successfully");
     }
 
     [HttpPost]
@@ -46,7 +48,7 @@ public class AchievementsController(
     {
         if (string.IsNullOrWhiteSpace(request.Title))
         {
-            return BadRequest("Title is required");
+            return this.ApiBadRequest(ErrorCodes.REQUIRED_FIELD_MISSING, "Title is required");
         }
 
         var achievement = new Domain.Entities.Achievement
@@ -65,7 +67,7 @@ public class AchievementsController(
         await achievementRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Created achievement {AchievementId}", achievement.Id);
-        return CreatedAtAction(nameof(GetById), new { id = achievement.Id }, MapToDto(achievement));
+        return this.ApiCreated(nameof(GetById), new { id = achievement.Id }, MapToDto(achievement), "Achievement created successfully");
     }
 
     [HttpPut("{id:guid}")]
@@ -89,7 +91,7 @@ public class AchievementsController(
         await achievementRepository.UpdateAsync(achievement, ct);
         await achievementRepository.SaveChangesAsync(ct);
 
-        return Ok(MapToDto(achievement));
+        return this.ApiOk(MapToDto(achievement), "Achievement updated successfully");
     }
 
     [HttpDelete("{id:guid}")]
@@ -106,7 +108,7 @@ public class AchievementsController(
         await achievementRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Deleted achievement {AchievementId}", id);
-        return NoContent();
+        return this.ApiOk("Achievement deleted successfully");
     }
 
     private static AchievementDto MapToDto(Domain.Entities.Achievement achievement)

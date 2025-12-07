@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.Recordings;
 using SpeakingPractice.Api.DTOs.Refinement;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 using SpeakingPractice.Api.Services.Interfaces;
 
@@ -29,7 +31,7 @@ public class RecordingsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         var isAdmin = User.IsInRole("Admin");
@@ -37,7 +39,7 @@ public class RecordingsController(
 
         if (!isAdmin && targetUserId != requesterId.Value)
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         IReadOnlyCollection<Domain.Entities.Recording> recordings;
@@ -59,7 +61,7 @@ public class RecordingsController(
             recordings = await recordingRepository.GetByUserIdAsync(requesterId.Value, ct);
         }
 
-        return Ok(recordings.Select(MapToDto));
+        return this.ApiOk(recordings.Select(MapToDto), "Recordings retrieved successfully");
     }
 
     [HttpGet("{id:guid}")]
@@ -68,21 +70,21 @@ public class RecordingsController(
         var recording = await recordingRepository.GetByIdAsync(id, ct);
         if (recording is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.RECORDING_NOT_FOUND, $"Recording with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (recording.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
-        return Ok(MapToDto(recording));
+        return this.ApiOk(MapToDto(recording), "Recording retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}")]
@@ -91,30 +93,30 @@ public class RecordingsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var recordings = await recordingRepository.GetByUserIdAsync(userId, ct);
-        return Ok(recordings.Select(MapToDto));
+        return this.ApiOk(recordings.Select(MapToDto), "Recordings retrieved successfully");
     }
 
     [HttpGet("question/{questionId:guid}")]
     public async Task<IActionResult> GetByQuestionId(Guid questionId, CancellationToken ct = default)
     {
         var recordings = await recordingRepository.GetByQuestionIdAsync(questionId, ct);
-        return Ok(recordings.Select(MapToDto));
+        return this.ApiOk(recordings.Select(MapToDto), "Recordings retrieved successfully");
     }
 
     [HttpGet("session/{sessionId:guid}")]
     public async Task<IActionResult> GetBySessionId(Guid sessionId, CancellationToken ct = default)
     {
         var recordings = await recordingRepository.GetBySessionIdAsync(sessionId, ct);
-        return Ok(recordings.Select(MapToDto));
+        return this.ApiOk(recordings.Select(MapToDto), "Recordings retrieved successfully");
     }
 
     [HttpGet("{id:guid}/analysis")]
@@ -123,27 +125,27 @@ public class RecordingsController(
         var recording = await recordingRepository.GetByIdAsync(id, ct);
         if (recording is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.RECORDING_NOT_FOUND, $"Recording with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (recording.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var analysis = await analysisResultRepository.GetByRecordingIdAsync(id, ct);
         if (analysis is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, "Analysis result not found");
         }
 
-        return Ok(new DTOs.AnalysisResults.AnalysisResultDto
+        return this.ApiOk(new DTOs.AnalysisResults.AnalysisResultDto
         {
             Id = analysis.Id,
             RecordingId = analysis.RecordingId,
@@ -161,7 +163,7 @@ public class RecordingsController(
             VocabularySuggestions = analysis.VocabularySuggestions,
             AnalyzedAt = analysis.AnalyzedAt,
             CreatedAt = analysis.CreatedAt
-        });
+        }, "Analysis retrieved successfully");
     }
 
     [HttpDelete("{id:guid}")]
@@ -170,25 +172,25 @@ public class RecordingsController(
         var recording = await recordingRepository.GetByIdAsync(id, ct);
         if (recording is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.RECORDING_NOT_FOUND, $"Recording with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (recording.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         await recordingRepository.DeleteAsync(recording, ct);
         await recordingRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Deleted recording {RecordingId}", id);
-        return NoContent();
+        return this.ApiOk("Recording deleted successfully");
     }
     [HttpPost("{id:guid}/refine")]
     public async Task<IActionResult> RefineResponse(Guid id, [FromBody] RefinementRequest? request, CancellationToken ct = default)
@@ -197,17 +199,17 @@ public class RecordingsController(
         {
             request ??= new RefinementRequest();
             var result = await refinementService.RefineResponseAsync(id, request, ct);
-            return Ok(result);
+            return this.ApiOk(result, "Response refined successfully");
         }
         catch (InvalidOperationException ex)
         {
             logger.LogWarning(ex, "Invalid operation for recording {RecordingId}", id);
-            return NotFound(new { error = ex.Message });
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, ex.Message);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error refining response for recording {RecordingId}", id);
-            return StatusCode(500, new { error = "Failed to refine response", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to refine response", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -217,17 +219,17 @@ public class RecordingsController(
         try
         {
             var suggestions = await refinementService.GetSuggestionsAsync(id, ct);
-            return Ok(suggestions);
+            return this.ApiOk(suggestions, "Refinement suggestions retrieved successfully");
         }
         catch (InvalidOperationException ex)
         {
             logger.LogWarning(ex, "Invalid operation for recording {RecordingId}", id);
-            return NotFound(new { error = ex.Message });
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, ex.Message);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting refinement suggestions for recording {RecordingId}", id);
-            return StatusCode(500, new { error = "Failed to get refinement suggestions", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to get refinement suggestions", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -237,12 +239,12 @@ public class RecordingsController(
         try
         {
             var result = await refinementService.CompareVersionsAsync(request.OriginalText, request.RefinedText, ct);
-            return Ok(result);
+            return this.ApiOk(result, "Versions compared successfully");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error comparing versions");
-            return StatusCode(500, new { error = "Failed to compare versions", message = ex.Message });
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to compare versions", new Dictionary<string, object> { { "details", ex.Message } });
         }
     }
 
@@ -252,23 +254,23 @@ public class RecordingsController(
         var recording = await recordingRepository.GetByIdAsync(id, ct);
         if (recording is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.RECORDING_NOT_FOUND, $"Recording with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (recording.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         // Return redirect to audio URL or implement file download
         // For now, return the URL
-        return Ok(new { audioUrl = recording.AudioUrl });
+        return this.ApiOk(new { audioUrl = recording.AudioUrl }, "Audio URL retrieved successfully");
     }
 
     private Guid? GetUserId()

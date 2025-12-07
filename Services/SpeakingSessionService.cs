@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using SpeakingPractice.Api.Domain.Entities;
 using SpeakingPractice.Api.DTOs.SpeakingSessions;
 using SpeakingPractice.Api.Infrastructure.Clients;
@@ -14,6 +15,7 @@ public class SpeakingSessionService(
     ISpeakingSessionRepository sessionRepository,
     IRecordingRepository recordingRepository,
     IAnalysisResultRepository analysisResultRepository,
+    UserManager<ApplicationUser> userManager,
     ILogger<SpeakingSessionService> logger) : ISpeakingSessionService
 {
     public async Task<SpeakingSessionDto> CreateSessionAsync(
@@ -21,6 +23,13 @@ public class SpeakingSessionService(
         Guid userId,
         CancellationToken ct)
     {
+        // Verify user exists
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            throw new UnauthorizedAccessException("User not found");
+        }
+
         var now = DateTimeOffset.UtcNow;
 
         var session = new PracticeSession

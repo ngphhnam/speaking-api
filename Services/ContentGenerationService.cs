@@ -50,8 +50,6 @@ public class ContentGenerationService(
             ["topicId"] = request.TopicId.ToString(),
             ["topicTitle"] = topic.Title
         };
-        if (!string.IsNullOrEmpty(request.QuestionType)) context["questionType"] = request.QuestionType;
-        if (request.EstimatedBandRequirement.HasValue) context["estimatedBandRequirement"] = request.EstimatedBandRequirement.Value;
 
         var resultJson = await llamaClient.GenerateAsync<JsonElement>(prompt, "questions", context, ct);
         
@@ -107,8 +105,91 @@ public class ContentGenerationService(
         };
         if (!string.IsNullOrEmpty(request.UserLevel)) context["userLevel"] = request.UserLevel;
 
-        var result = await llamaClient.GenerateAsync<OutlineDto>(prompt, "outline", context, ct);
-        return result;
+        var resultJson = await llamaClient.GenerateAsync<JsonElement>(prompt, "outline", context, ct);
+        
+        // Parse the JSON flexibly, handling cases where introduction might be an object or string
+        var outline = new OutlineDto();
+        
+        if (resultJson.ValueKind == JsonValueKind.Object)
+        {
+            // Parse outline
+            if (resultJson.TryGetProperty("outline", out var outlineElement) && outlineElement.ValueKind == JsonValueKind.Object)
+            {
+                var outlineContent = new OutlineContent();
+                
+                // Handle introduction - could be string or object
+                if (outlineElement.TryGetProperty("introduction", out var introElement))
+                {
+                    if (introElement.ValueKind == JsonValueKind.String)
+                    {
+                        outlineContent.Introduction = introElement.GetString() ?? string.Empty;
+                    }
+                    else if (introElement.ValueKind == JsonValueKind.Object)
+                    {
+                        // Try to extract text from common properties
+                        if (introElement.TryGetProperty("text", out var textProp) && textProp.ValueKind == JsonValueKind.String)
+                            outlineContent.Introduction = textProp.GetString() ?? string.Empty;
+                        else if (introElement.TryGetProperty("content", out var contentProp) && contentProp.ValueKind == JsonValueKind.String)
+                            outlineContent.Introduction = contentProp.GetString() ?? string.Empty;
+                        else
+                            outlineContent.Introduction = introElement.GetRawText(); // Fallback: serialize object to JSON string
+                    }
+                }
+                
+                // Parse mainPoints
+                if (outlineElement.TryGetProperty("mainPoints", out var mainPointsElement) && mainPointsElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var pointElement in mainPointsElement.EnumerateArray())
+                    {
+                        var point = JsonSerializer.Deserialize<OutlinePoint>(pointElement.GetRawText());
+                        if (point != null)
+                            outlineContent.MainPoints.Add(point);
+                    }
+                }
+                
+                // Parse conclusion - could be string or object
+                if (outlineElement.TryGetProperty("conclusion", out var conclusionElement))
+                {
+                    if (conclusionElement.ValueKind == JsonValueKind.String)
+                    {
+                        outlineContent.Conclusion = conclusionElement.GetString() ?? string.Empty;
+                    }
+                    else if (conclusionElement.ValueKind == JsonValueKind.Object)
+                    {
+                        // Try to extract text from common properties
+                        if (conclusionElement.TryGetProperty("text", out var textProp) && textProp.ValueKind == JsonValueKind.String)
+                            outlineContent.Conclusion = textProp.GetString() ?? string.Empty;
+                        else if (conclusionElement.TryGetProperty("content", out var contentProp) && contentProp.ValueKind == JsonValueKind.String)
+                            outlineContent.Conclusion = contentProp.GetString() ?? string.Empty;
+                        else
+                            outlineContent.Conclusion = conclusionElement.GetRawText(); // Fallback: serialize object to JSON string
+                    }
+                }
+                
+                outline.Outline = outlineContent;
+            }
+            
+            // Parse estimatedDuration
+            if (resultJson.TryGetProperty("estimatedDuration", out var durationElement))
+            {
+                if (durationElement.ValueKind == JsonValueKind.Number)
+                    outline.EstimatedDuration = durationElement.GetInt32();
+            }
+            
+            // Parse keyPhrases
+            if (resultJson.TryGetProperty("keyPhrases", out var phrasesElement) && phrasesElement.ValueKind == JsonValueKind.Array)
+            {
+                var phrases = new List<string>();
+                foreach (var phraseElement in phrasesElement.EnumerateArray())
+                {
+                    if (phraseElement.ValueKind == JsonValueKind.String)
+                        phrases.Add(phraseElement.GetString() ?? string.Empty);
+                }
+                outline.KeyPhrases = phrases.ToArray();
+            }
+        }
+        
+        return outline;
     }
 
     public async Task<VocabularyDto> GenerateVocabularyAsync(Guid questionId, GenerateVocabularyRequest request, CancellationToken ct)
@@ -176,9 +257,7 @@ public class ContentGenerationService(
     {
         return $"Generate {request.Count} IELTS speaking questions for topic: {topic.Title}\n" +
                $"Topic Description: {topic.Description ?? "N/A"}\n" +
-               (request.QuestionType != null ? $"Question Type: {request.QuestionType}\n" : "") +
-               (request.EstimatedBandRequirement.HasValue ? $"Target Band Score: {request.EstimatedBandRequirement.Value}\n" : "") +
-               "Each question should include: questionText, questionType, suggestedStructure, sampleAnswers (array), keyVocabulary (array), estimatedBandRequirement, timeLimitSeconds\n" +
+               "Each question should include: questionText, suggestedStructure, sampleAnswers (array), keyVocabulary (array)\n" +
                "Return JSON format: {\"questions\": [{...}]}";
     }
 

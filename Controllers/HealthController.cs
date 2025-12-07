@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Minio;
+using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Infrastructure.Persistence;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -17,7 +19,7 @@ public class HealthController(
     ILogger<HealthController> logger) : ControllerBase
 {
     [HttpGet]
-    public IActionResult Get() => Ok(new { status = "Healthy", timestamp = DateTimeOffset.UtcNow });
+    public IActionResult Get() => this.ApiOk(new { status = "Healthy", timestamp = DateTimeOffset.UtcNow }, "Service is healthy");
 
     [HttpGet("dependencies")]
     public async Task<IActionResult> Dependencies(CancellationToken ct)
@@ -38,7 +40,7 @@ public class HealthController(
         results["llama"] = await CheckHttpAsync(configuration["Llama:BaseUrl"], ct);
         results["languageTool"] = await CheckHttpAsync(configuration["LanguageTool:BaseUrl"], ct);
 
-        return Ok(results);
+        return this.ApiOk(results, "Dependencies checked successfully");
     }
 
     private async Task<string> CheckAsync(Func<Task> action)

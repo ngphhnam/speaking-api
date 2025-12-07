@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.UserProgress;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -22,12 +24,12 @@ public class UserProgressController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         // Get current period progress (today for daily, this week for weekly, this month for monthly)
@@ -36,16 +38,16 @@ public class UserProgressController(
         
         if (currentDaily is null)
         {
-            return Ok(new UserProgressDto
+            return this.ApiOk(new UserProgressDto
             {
                 UserId = userId,
                 PeriodType = "daily",
                 PeriodStart = today,
                 PeriodEnd = today
-            });
+            }, "Progress retrieved successfully");
         }
 
-        return Ok(MapToDto(currentDaily));
+        return this.ApiOk(MapToDto(currentDaily), "Progress retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/daily")]
@@ -54,12 +56,12 @@ public class UserProgressController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var dailyProgress = await userProgressRepository.GetByUserIdAndPeriodTypeAsync(userId, "daily", ct);
@@ -72,16 +74,16 @@ public class UserProgressController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var weeklyProgress = await userProgressRepository.GetByUserIdAndPeriodTypeAsync(userId, "weekly", ct);
-        return Ok(weeklyProgress.Select(MapToDto));
+        return this.ApiOk(weeklyProgress.Select(MapToDto), "Weekly progress retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/monthly")]
@@ -90,16 +92,16 @@ public class UserProgressController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var monthlyProgress = await userProgressRepository.GetByUserIdAndPeriodTypeAsync(userId, "monthly", ct);
-        return Ok(monthlyProgress.Select(MapToDto));
+        return this.ApiOk(monthlyProgress.Select(MapToDto), "Monthly progress retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/statistics")]
@@ -108,12 +110,12 @@ public class UserProgressController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var allProgress = await userProgressRepository.GetByUserIdAsync(userId, ct);
@@ -194,7 +196,7 @@ public class UserProgressController(
             LongestStreak = longestStreak
         };
 
-        return Ok(statistics);
+        return this.ApiOk(statistics, "Statistics retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/trends")]
@@ -207,12 +209,12 @@ public class UserProgressController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var progress = await userProgressRepository.GetByUserIdAndPeriodTypeAsync(userId, periodType, ct);
@@ -234,7 +236,7 @@ public class UserProgressController(
             })
             .ToList();
 
-        return Ok(trends);
+        return this.ApiOk(trends, "Trends retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/improvement")]
@@ -243,12 +245,12 @@ public class UserProgressController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var allProgress = await userProgressRepository.GetByUserIdAsync(userId, ct);
@@ -256,12 +258,12 @@ public class UserProgressController(
 
         if (progressList.Count < 2)
         {
-            return Ok(new
+            return this.ApiOk(new
             {
                 improvementPercentage = 0,
                 scoreChange = 0,
                 message = "Not enough data to calculate improvement"
-            });
+            }, "Improvement data retrieved successfully");
         }
 
         var first = progressList.First();
@@ -279,7 +281,7 @@ public class UserProgressController(
             }
         }
 
-        return Ok(new
+        return this.ApiOk(new
         {
             improvementPercentage,
             scoreChange,
@@ -293,7 +295,7 @@ public class UserProgressController(
                 PeriodStart = last.PeriodStart,
                 AvgScore = last.AvgOverallScore
             }
-        });
+        }, "Improvement retrieved successfully");
     }
 
     [HttpPost("user/{userId:guid}/calculate")]
@@ -305,7 +307,7 @@ public class UserProgressController(
         // For now, return a placeholder response
         logger.LogInformation("Calculating progress for user {UserId}", userId);
         
-        return Task.FromResult<IActionResult>(Ok(new { message = "Progress calculation initiated", userId }));
+        return Task.FromResult<IActionResult>(this.ApiOk(new { message = "Progress calculation initiated", userId }, "Progress calculation initiated"));
     }
 
     private Guid? GetUserId()

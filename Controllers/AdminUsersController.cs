@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Services.Interfaces;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -20,7 +22,7 @@ public class AdminUsersController(
         CancellationToken ct = default)
     {
         var users = await userManagementService.GetUsersAsync(page, pageSize, role, search, ct);
-        return Ok(users);
+        return this.ApiOk(users, "Users retrieved successfully");
     }
 
     [HttpPost("{id:guid}/roles")]
@@ -28,25 +30,25 @@ public class AdminUsersController(
     {
         if (string.IsNullOrWhiteSpace(request.Role))
         {
-            return BadRequest("Role is required.");
+            return this.ApiBadRequest(ErrorCodes.REQUIRED_FIELD_MISSING, "Role is required");
         }
 
         await userManagementService.AssignRoleAsync(id, request.Role, ct);
-        return NoContent();
+        return this.ApiOk("Role assigned successfully");
     }
 
     [HttpPost("{id:guid}/lock")]
     public async Task<IActionResult> Lock(Guid id, CancellationToken ct)
     {
         await userManagementService.LockUserAsync(id, ct);
-        return NoContent();
+        return this.ApiOk("User locked successfully");
     }
 
     [HttpPost("{id:guid}/unlock")]
     public async Task<IActionResult> Unlock(Guid id, CancellationToken ct)
     {
         await userManagementService.UnlockUserAsync(id, ct);
-        return NoContent();
+        return this.ApiOk("User unlocked successfully");
     }
 
     [HttpGet("{id:guid}")]
@@ -56,9 +58,9 @@ public class AdminUsersController(
         var user = users.Items.FirstOrDefault(u => u.Id == id);
         if (user is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.USER_NOT_FOUND_RESOURCE, $"User with id {id} not found");
         }
-        return Ok(user);
+        return this.ApiOk(user, "User retrieved successfully");
     }
 
     [HttpPut("{id:guid}")]
@@ -66,7 +68,7 @@ public class AdminUsersController(
     {
         // Implementation would update user details
         logger.LogInformation("Updating user {UserId}", id);
-        return Task.FromResult<IActionResult>(Ok(new { message = "User updated", userId = id }));
+        return Task.FromResult<IActionResult>(this.ApiOk(new { message = "User updated", userId = id }, "User updated successfully"));
     }
 
     [HttpDelete("{id:guid}")]
@@ -74,60 +76,60 @@ public class AdminUsersController(
     {
         // Implementation would delete user
         logger.LogInformation("Deleting user {UserId}", id);
-        return Task.FromResult<IActionResult>(NoContent());
+        return Task.FromResult<IActionResult>(this.ApiOk("User deleted successfully"));
     }
 
     [HttpGet("{id:guid}/statistics")]
     public Task<IActionResult> GetUserStatistics(Guid id, CancellationToken ct)
     {
         // Implementation would get user statistics
-        return Task.FromResult<IActionResult>(Ok(new
+        return Task.FromResult<IActionResult>(this.ApiOk(new
         {
             UserId = id,
             TotalSessions = 0,
             TotalRecordings = 0,
             AvgScore = (decimal?)null
-        }));
+        }, "User statistics retrieved successfully"));
     }
 
     [HttpGet("{id:guid}/recordings")]
     public Task<IActionResult> GetUserRecordings(Guid id, CancellationToken ct)
     {
         // Implementation would get user recordings
-        return Task.FromResult<IActionResult>(Ok(Array.Empty<object>()));
+        return Task.FromResult<IActionResult>(this.ApiOk(Array.Empty<object>(), "User recordings retrieved successfully"));
     }
 
     [HttpGet("{id:guid}/sessions")]
     public Task<IActionResult> GetUserSessions(Guid id, CancellationToken ct)
     {
         // Implementation would get user sessions
-        return Task.FromResult<IActionResult>(Ok(Array.Empty<object>()));
+        return Task.FromResult<IActionResult>(this.ApiOk(Array.Empty<object>(), "User recordings retrieved successfully"));
     }
 
     [HttpGet("statistics")]
     public Task<IActionResult> GetPlatformStatistics(CancellationToken ct)
     {
         // Implementation would get platform-wide statistics
-        return Task.FromResult<IActionResult>(Ok(new
+        return Task.FromResult<IActionResult>(this.ApiOk(new
         {
             TotalUsers = 0,
             TotalSessions = 0,
             TotalRecordings = 0,
             ActiveUsers = 0
-        }));
+        }, "Platform statistics retrieved successfully"));
     }
 
     [HttpGet("analytics")]
     public Task<IActionResult> GetAnalytics(CancellationToken ct)
     {
         // Implementation would get analytics data
-        return Task.FromResult<IActionResult>(Ok(new
+        return Task.FromResult<IActionResult>(this.ApiOk(new
         {
             DailyActiveUsers = 0,
             WeeklyActiveUsers = 0,
             MonthlyActiveUsers = 0,
             GrowthRate = 0.0m
-        }));
+        }, "Analytics retrieved successfully"));
     }
 
     public class AssignRoleRequest

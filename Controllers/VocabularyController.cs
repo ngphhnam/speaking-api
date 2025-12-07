@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.Vocabulary;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -40,7 +42,7 @@ public class VocabularyController(
             vocabularies = await vocabularyRepository.GetAllAsync(ct);
         }
 
-        return Ok(vocabularies.Select(MapToDto));
+        return this.ApiOk(vocabularies.Select(MapToDto), "Vocabularies retrieved successfully");
     }
 
     [HttpGet("{id:guid}")]
@@ -50,10 +52,10 @@ public class VocabularyController(
         var vocabulary = await vocabularyRepository.GetByIdAsync(id, ct);
         if (vocabulary is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"Vocabulary with id {id} not found");
         }
 
-        return Ok(MapToDto(vocabulary));
+        return this.ApiOk(MapToDto(vocabulary), "Vocabulary retrieved successfully");
     }
 
     [HttpGet("search")]
@@ -62,11 +64,11 @@ public class VocabularyController(
     {
         if (string.IsNullOrWhiteSpace(q))
         {
-            return BadRequest("Search query is required");
+            return this.ApiBadRequest(ErrorCodes.REQUIRED_FIELD_MISSING, "Search query is required");
         }
 
         var vocabularies = await vocabularyRepository.SearchAsync(q, ct);
-        return Ok(vocabularies.Select(MapToDto));
+        return this.ApiOk(vocabularies.Select(MapToDto), "Vocabularies retrieved successfully");
     }
 
     [HttpGet("topic/{topicId:guid}")]
@@ -76,7 +78,7 @@ public class VocabularyController(
         var topic = await topicRepository.GetByIdAsync(topicId, ct);
         if (topic is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.TOPIC_NOT_FOUND, $"Topic with id {topicId} not found");
         }
 
         // Get vocabulary from topic's questions
@@ -96,7 +98,7 @@ public class VocabularyController(
             }
         }
 
-        return Ok(vocabularies.Select(MapToDto));
+        return this.ApiOk(vocabularies.Select(MapToDto), "Vocabularies retrieved successfully");
     }
 
     [HttpGet("band/{bandLevel:decimal}")]
@@ -104,7 +106,7 @@ public class VocabularyController(
     public async Task<IActionResult> GetByBandLevel(decimal bandLevel, CancellationToken ct = default)
     {
         var vocabularies = await vocabularyRepository.GetByBandLevelAsync(bandLevel, bandLevel + 1, ct);
-        return Ok(vocabularies.Select(MapToDto));
+        return this.ApiOk(vocabularies.Select(MapToDto), "Vocabularies retrieved successfully");
     }
 
     [HttpPost]
@@ -113,14 +115,14 @@ public class VocabularyController(
     {
         if (string.IsNullOrWhiteSpace(request.Word))
         {
-            return BadRequest("Word is required");
+            return this.ApiBadRequest(ErrorCodes.REQUIRED_FIELD_MISSING, "Word is required");
         }
 
         // Check if word already exists
         var existing = await vocabularyRepository.GetByWordAsync(request.Word, ct);
         if (existing is not null)
         {
-            return Conflict($"Vocabulary with word '{request.Word}' already exists");
+            return this.ApiStatusCode(409, ErrorCodes.UNIQUE_CONSTRAINT_VIOLATION, $"Vocabulary with word '{request.Word}' already exists");
         }
 
         var vocabulary = new Domain.Entities.Vocabulary
@@ -144,7 +146,7 @@ public class VocabularyController(
         await vocabularyRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Created vocabulary {VocabularyId} for word {Word}", vocabulary.Id, vocabulary.Word);
-        return CreatedAtAction(nameof(GetById), new { id = vocabulary.Id }, MapToDto(vocabulary));
+        return this.ApiCreated(nameof(GetById), new { id = vocabulary.Id }, MapToDto(vocabulary), "Vocabulary created successfully");
     }
 
     [HttpPut("{id:guid}")]
@@ -162,7 +164,7 @@ public class VocabularyController(
             var existing = await vocabularyRepository.GetByWordAsync(request.Word, ct);
             if (existing is not null && existing.Id != id)
             {
-                return Conflict($"Vocabulary with word '{request.Word}' already exists");
+                return this.ApiStatusCode(409, ErrorCodes.UNIQUE_CONSTRAINT_VIOLATION, $"Vocabulary with word '{request.Word}' already exists");
             }
             vocabulary.Word = request.Word;
         }
@@ -183,7 +185,7 @@ public class VocabularyController(
         await vocabularyRepository.UpdateAsync(vocabulary, ct);
         await vocabularyRepository.SaveChangesAsync(ct);
 
-        return Ok(MapToDto(vocabulary));
+        return this.ApiOk(MapToDto(vocabulary), "Vocabulary updated successfully");
     }
 
     [HttpDelete("{id:guid}")]
@@ -200,7 +202,7 @@ public class VocabularyController(
         await vocabularyRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Deleted vocabulary {VocabularyId}", id);
-        return NoContent();
+        return this.ApiOk("Vocabulary deleted successfully");
     }
 
     private static VocabularyDto MapToDto(Domain.Entities.Vocabulary vocabulary)

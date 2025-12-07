@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 
 namespace SpeakingPractice.Api.Controllers;
 
@@ -23,12 +25,12 @@ public class RoutesController : ControllerBase
             .OrderBy(e => e.Path)
             .ToList();
 
-        return Ok(new
+        return this.ApiOk(new
         {
             total = routes.Count,
             baseUrl = $"{Request.Scheme}://{Request.Host}",
             routes = routes
-        });
+        }, "Routes retrieved successfully");
     }
 }
 

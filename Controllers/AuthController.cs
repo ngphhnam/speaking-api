@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.Domain.Entities;
 using SpeakingPractice.Api.DTOs.Auth;
 using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 using SpeakingPractice.Api.Services.Interfaces;
 
@@ -42,7 +43,8 @@ public class AuthController(
         var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
-            return BadRequest(result.Errors);
+            var errors = result.Errors.Select(e => e.Description).ToList();
+            return this.ApiBadRequest(ErrorCodes.VALIDATION_ERROR, "Registration failed", new Dictionary<string, object> { { "errors", errors } });
         }
 
         if (!await roleManager.RoleExistsAsync(role))
@@ -54,7 +56,9 @@ public class AuthController(
         await EnsureDefaultRolesAsync();
 
         var authResponse = await IssueTokensAsync(user, ct);
-        return Ok(authResponse);
+        SetRefreshTokenCookie(authResponse.RefreshToken, authResponse.ExpiresAt);
+        SetAccessTokenCookie(authResponse.AccessToken, authResponse.ExpiresAt);
+        return this.ApiOk(authResponse, "Registration successful");
     }
 
     [HttpPost("login")]
@@ -64,17 +68,19 @@ public class AuthController(
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.INVALID_CREDENTIALS, "Invalid email or password");
         }
 
         var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, true);
         if (!result.Succeeded)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.INVALID_CREDENTIALS, "Invalid email or password");
         }
 
         var authResponse = await IssueTokensAsync(user, ct);
-        return Ok(authResponse);
+        SetRefreshTokenCookie(authResponse.RefreshToken, authResponse.ExpiresAt);
+        SetAccessTokenCookie(authResponse.AccessToken, authResponse.ExpiresAt);
+        return this.ApiOk(authResponse, "Login successful");
     }
 
     [HttpPost("refresh-token")]
@@ -84,47 +90,49 @@ public class AuthController(
         var existing = await refreshTokenRepository.GetByTokenAsync(request.RefreshToken, ct);
         if (existing is null || existing.IsRevoked)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.TOKEN_INVALID, "Invalid refresh token");
         }
 
         if (existing.ExpiresAt < DateTimeOffset.UtcNow)
         {
             await refreshTokenRepository.RevokeAsync(existing, ct);
             await refreshTokenRepository.SaveChangesAsync(ct);
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.TOKEN_EXPIRED, "Refresh token has expired");
         }
 
         var user = existing.User ?? await userManager.FindByIdAsync(existing.UserId.ToString());
         if (user is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.USER_NOT_FOUND, "User not found");
         }
 
         await refreshTokenRepository.RevokeAsync(existing, ct);
         await refreshTokenRepository.SaveChangesAsync(ct);
 
         var authResponse = await IssueTokensAsync(user, ct);
-        return Ok(authResponse);
+        SetRefreshTokenCookie(authResponse.RefreshToken, authResponse.ExpiresAt);
+        SetAccessTokenCookie(authResponse.AccessToken, authResponse.ExpiresAt);
+        return this.ApiOk(authResponse, "Token refreshed successfully");
     }
 
     [HttpGet("me")]
     [Authorize]
-    public async Task<ActionResult<UserDto>> Me(CancellationToken ct)
+    public async Task<IActionResult> Me(CancellationToken ct)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         var user = await userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.USER_NOT_FOUND, "User not found");
         }
 
         var dto = await userService.MapToDtoAsync(user, ct);
-        return Ok(dto);
+        return this.ApiOk(dto, "Profile retrieved successfully");
     }
 
     [HttpPost("forgot-password")]
@@ -133,7 +141,7 @@ public class AuthController(
     {
         // Implementation would send password reset email
         logger.LogInformation("Password reset requested for email {Email}", request.Email);
-        return Task.FromResult<IActionResult>(Ok(new { message = "If the email exists, a password reset link has been sent." }));
+        return Task.FromResult<IActionResult>(this.ApiOk("If the email exists, a password reset link has been sent."));
     }
 
     [HttpPost("reset-password")]
@@ -142,7 +150,7 @@ public class AuthController(
     {
         // Implementation would validate token and reset password
         logger.LogInformation("Password reset attempted with token");
-        return Task.FromResult<IActionResult>(Ok(new { message = "Password has been reset successfully." }));
+        return Task.FromResult<IActionResult>(this.ApiOk("Password has been reset successfully."));
     }
 
     [HttpPost("change-password")]
@@ -152,23 +160,24 @@ public class AuthController(
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         var user = await userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.USER_NOT_FOUND, "User not found");
         }
 
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
         {
-            return BadRequest(result.Errors);
+            var errors = result.Errors.Select(e => e.Description).ToList();
+            return this.ApiBadRequest(ErrorCodes.VALIDATION_ERROR, "Password change failed", new Dictionary<string, object> { { "errors", errors } });
         }
 
         logger.LogInformation("Password changed for user {UserId}", userId);
-        return Ok(new { message = "Password changed successfully." });
+        return this.ApiOk("Password changed successfully");
     }
 
     [HttpPut("profile")]
@@ -178,13 +187,13 @@ public class AuthController(
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         var user = await userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.USER_NOT_FOUND, "User not found");
         }
 
         if (!string.IsNullOrWhiteSpace(request.FullName))
@@ -196,16 +205,17 @@ public class AuthController(
         var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded)
         {
-            return BadRequest(result.Errors);
+            var errors = result.Errors.Select(e => e.Description).ToList();
+            return this.ApiBadRequest(ErrorCodes.VALIDATION_ERROR, "Profile update failed", new Dictionary<string, object> { { "errors", errors } });
         }
 
         var dto = await userService.MapToDtoAsync(user, ct);
-        return Ok(dto);
+        return this.ApiOk(dto, "Profile retrieved successfully");
     }
 
     [HttpGet("profile")]
     [Authorize]
-    public async Task<ActionResult<UserDto>> GetProfile(CancellationToken ct)
+    public async Task<IActionResult> GetProfile(CancellationToken ct)
     {
         return await Me(ct);
     }
@@ -224,8 +234,12 @@ public class AuthController(
             }
         }
 
+        // Clear cookies
+        Response.Cookies.Delete("refreshToken");
+        Response.Cookies.Delete("accessToken");
+
         logger.LogInformation("User logged out");
-        return Ok(new { message = "Logged out successfully." });
+        return this.ApiOk("Logged out successfully");
     }
 
     private async Task<AuthResponse> IssueTokensAsync(ApplicationUser user, CancellationToken ct)
@@ -245,6 +259,35 @@ public class AuthController(
             RefreshToken = refreshToken.Token,
             User = userDto
         };
+    }
+
+    private void SetRefreshTokenCookie(string refreshToken, DateTimeOffset expiresAt)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            // Using None because frontend (Next.js) runs on a different origin (localhost:3000)
+            SameSite = SameSiteMode.None,
+            Expires = expiresAt,
+            Path = "/"
+        };
+
+        Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+    }
+
+    private void SetAccessTokenCookie(string accessToken, DateTimeOffset expiresAt)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = false, // cho phép Next.js đọc và gắn vào Authorization header nếu cần
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = expiresAt,
+            Path = "/"
+        };
+
+        Response.Cookies.Append("accessToken", accessToken, cookieOptions);
     }
 
     private async Task EnsureDefaultRolesAsync()

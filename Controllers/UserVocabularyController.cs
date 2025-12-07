@@ -2,7 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.UserVocabulary;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Infrastructure.Persistence;
 using SpeakingPractice.Api.Repositories;
 
@@ -23,12 +25,12 @@ public class UserVocabularyController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var userVocabularies = await userVocabularyRepository.GetByUserIdAsync(userId, ct);
@@ -37,7 +39,7 @@ public class UserVocabularyController(
             .Where(uv => uv.UserId == userId)
             .ToListAsync(ct);
 
-        return Ok(vocabularies.Select(MapToDto));
+        return this.ApiOk(vocabularies.Select(MapToDto), "User vocabularies retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/learning")]
@@ -46,12 +48,12 @@ public class UserVocabularyController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var userVocabularies = await userVocabularyRepository.GetByUserIdAndStatusAsync(userId, "learning", ct);
@@ -60,7 +62,7 @@ public class UserVocabularyController(
             .Where(uv => uv.UserId == userId && uv.LearningStatus == "learning")
             .ToListAsync(ct);
 
-        return Ok(vocabularies.Select(MapToDto));
+        return this.ApiOk(vocabularies.Select(MapToDto), "User vocabularies retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/reviewing")]
@@ -69,12 +71,12 @@ public class UserVocabularyController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var userVocabularies = await userVocabularyRepository.GetByUserIdAndStatusAsync(userId, "reviewing", ct);
@@ -83,7 +85,7 @@ public class UserVocabularyController(
             .Where(uv => uv.UserId == userId && uv.LearningStatus == "reviewing")
             .ToListAsync(ct);
 
-        return Ok(vocabularies.Select(MapToDto));
+        return this.ApiOk(vocabularies.Select(MapToDto), "User vocabularies retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/mastered")]
@@ -92,12 +94,12 @@ public class UserVocabularyController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var userVocabularies = await userVocabularyRepository.GetByUserIdAndStatusAsync(userId, "mastered", ct);
@@ -106,7 +108,7 @@ public class UserVocabularyController(
             .Where(uv => uv.UserId == userId && uv.LearningStatus == "mastered")
             .ToListAsync(ct);
 
-        return Ok(vocabularies.Select(MapToDto));
+        return this.ApiOk(vocabularies.Select(MapToDto), "User vocabularies retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/due-for-review")]
@@ -115,12 +117,12 @@ public class UserVocabularyController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var userVocabularies = await userVocabularyRepository.GetDueForReviewAsync(userId, ct);
@@ -129,7 +131,7 @@ public class UserVocabularyController(
             .Where(uv => uv.UserId == userId && uv.NextReviewAt.HasValue && uv.NextReviewAt <= DateTimeOffset.UtcNow)
             .ToListAsync(ct);
 
-        return Ok(vocabularies.Select(MapToDto));
+        return this.ApiOk(vocabularies.Select(MapToDto), "User vocabularies retrieved successfully");
     }
 
     [HttpPost]
@@ -144,13 +146,13 @@ public class UserVocabularyController(
         var vocabulary = await vocabularyRepository.GetByIdAsync(request.VocabularyId, ct);
         if (vocabulary is null)
         {
-            return NotFound("Vocabulary not found");
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, "Vocabulary not found");
         }
 
         var existing = await userVocabularyRepository.GetByUserAndVocabularyAsync(userId.Value, request.VocabularyId, ct);
         if (existing is not null)
         {
-            return Conflict("Vocabulary already added to user's list");
+            return this.ApiStatusCode(409, ErrorCodes.UNIQUE_CONSTRAINT_VIOLATION, "Vocabulary already added to user's list");
         }
 
         var userVocabulary = new Domain.Entities.UserVocabulary
@@ -171,7 +173,7 @@ public class UserVocabularyController(
             .FirstOrDefaultAsync(uv => uv.Id == userVocabulary.Id, ct);
 
         logger.LogInformation("Added vocabulary {VocabularyId} to user {UserId}", request.VocabularyId, userId);
-        return CreatedAtAction(nameof(GetUserVocabulary), new { userId = userId.Value }, MapToDto(result!));
+        return this.ApiCreated(nameof(GetUserVocabulary), new { userId = userId.Value }, MapToDto(result!), "Vocabulary added successfully");
     }
 
     [HttpPut("{id:guid}")]
@@ -180,18 +182,18 @@ public class UserVocabularyController(
         var userVocabulary = await userVocabularyRepository.GetByIdAsync(id, ct);
         if (userVocabulary is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"User vocabulary with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userVocabulary.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         if (!string.IsNullOrWhiteSpace(request.LearningStatus))
@@ -199,7 +201,7 @@ public class UserVocabularyController(
             var validStatuses = new[] { "new", "learning", "reviewing", "mastered" };
             if (!validStatuses.Contains(request.LearningStatus))
             {
-                return BadRequest("Invalid learning status");
+                return this.ApiBadRequest(ErrorCodes.INVALID_VALUE, "Invalid learning status");
             }
 
             userVocabulary.LearningStatus = request.LearningStatus;
@@ -230,7 +232,7 @@ public class UserVocabularyController(
             .Include(uv => uv.Vocabulary)
             .FirstOrDefaultAsync(uv => uv.Id == id, ct);
 
-        return Ok(MapToDto(result!));
+        return this.ApiOk(MapToDto(result!), "User vocabulary updated successfully");
     }
 
     [HttpPut("{id:guid}/review")]
@@ -239,18 +241,18 @@ public class UserVocabularyController(
         var userVocabulary = await userVocabularyRepository.GetByIdAsync(id, ct);
         if (userVocabulary is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"User vocabulary with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userVocabulary.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         userVocabulary.ReviewCount++;
@@ -293,7 +295,7 @@ public class UserVocabularyController(
             .Include(uv => uv.Vocabulary)
             .FirstOrDefaultAsync(uv => uv.Id == id, ct);
 
-        return Ok(MapToDto(result!));
+        return this.ApiOk(MapToDto(result!), "User vocabulary updated successfully");
     }
 
     [HttpDelete("{id:guid}")]
@@ -302,25 +304,25 @@ public class UserVocabularyController(
         var userVocabulary = await userVocabularyRepository.GetByIdAsync(id, ct);
         if (userVocabulary is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"User vocabulary with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userVocabulary.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         await userVocabularyRepository.DeleteAsync(userVocabulary, ct);
         await userVocabularyRepository.SaveChangesAsync(ct);
 
         logger.LogInformation("Deleted user vocabulary {UserVocabularyId}", id);
-        return NoContent();
+        return this.ApiOk("User vocabulary deleted successfully");
     }
 
     [HttpGet("user/{userId:guid}/statistics")]
@@ -329,12 +331,12 @@ public class UserVocabularyController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var userVocabularies = await context.UserVocabularies
@@ -354,7 +356,7 @@ public class UserVocabularyController(
             MasteryPercentage = total > 0 ? (decimal)mastered / total * 100 : 0
         };
 
-        return Ok(statistics);
+        return this.ApiOk(statistics, "Statistics retrieved successfully");
     }
 
     private Guid? GetUserId()

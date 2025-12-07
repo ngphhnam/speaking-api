@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.DTOs.AnalysisResults;
+using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 
 namespace SpeakingPractice.Api.Controllers;
@@ -20,21 +22,21 @@ public class AnalysisResultsController(
         var analysis = await analysisResultRepository.GetByIdAsync(id, ct);
         if (analysis is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"Analysis result with id {id} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (analysis.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
-        return Ok(MapToDto(analysis));
+        return this.ApiOk(MapToDto(analysis), "Analysis result retrieved successfully");
     }
 
     [HttpGet("recording/{recordingId:guid}")]
@@ -43,18 +45,18 @@ public class AnalysisResultsController(
         var recording = await recordingRepository.GetByIdAsync(recordingId, ct);
         if (recording is null)
         {
-            return NotFound();
+            return this.ApiNotFound(ErrorCodes.RECORDING_NOT_FOUND, $"Recording with id {recordingId} not found");
         }
 
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (recording.UserId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var analysis = await analysisResultRepository.GetByRecordingIdAsync(recordingId, ct);
@@ -63,7 +65,7 @@ public class AnalysisResultsController(
             return NotFound();
         }
 
-        return Ok(MapToDto(analysis));
+        return this.ApiOk(MapToDto(analysis), "Analysis result retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}")]
@@ -72,16 +74,16 @@ public class AnalysisResultsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var analyses = await analysisResultRepository.GetByUserIdAsync(userId, ct);
-        return Ok(analyses.Select(MapToDto));
+        return this.ApiOk(analyses.Select(MapToDto), "Analysis results retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/statistics")]
@@ -90,12 +92,12 @@ public class AnalysisResultsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var analyses = await analysisResultRepository.GetByUserIdAsync(userId, ct);
@@ -103,11 +105,11 @@ public class AnalysisResultsController(
 
         if (!analysesList.Any())
         {
-            return Ok(new UserStatisticsDto
+            return this.ApiOk(new UserStatisticsDto
             {
                 UserId = userId,
                 TotalRecordings = 0
-            });
+            }, "Statistics retrieved successfully");
         }
 
         var scores = analysesList
@@ -153,7 +155,7 @@ public class AnalysisResultsController(
             Strengths = strengths.ToArray()
         };
 
-        return Ok(statistics);
+        return this.ApiOk(statistics, "Statistics retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/trends")]
@@ -165,12 +167,12 @@ public class AnalysisResultsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var cutoffDate = DateTimeOffset.UtcNow.AddDays(-days);
@@ -190,7 +192,7 @@ public class AnalysisResultsController(
             PronunciationScore = a.PronunciationScore
         }).ToList();
 
-        return Ok(trends);
+        return this.ApiOk(trends, "Trends retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/weak-areas")]
@@ -199,12 +201,12 @@ public class AnalysisResultsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var analyses = await analysisResultRepository.GetByUserIdAsync(userId, ct);
@@ -212,7 +214,7 @@ public class AnalysisResultsController(
 
         if (!analysesList.Any())
         {
-            return Ok(new { weakAreas = Array.Empty<string>() });
+            return this.ApiOk(new { weakAreas = Array.Empty<string>() }, "Weak areas retrieved successfully");
         }
 
         var avgFluency = analysesList.Where(a => a.FluencyScore.HasValue).Average(a => a.FluencyScore!.Value);
@@ -234,7 +236,7 @@ public class AnalysisResultsController(
             .Select(s => s.Key)
             .ToArray();
 
-        return Ok(new { weakAreas });
+        return this.ApiOk(new { weakAreas }, "Weak areas retrieved successfully");
     }
 
     [HttpGet("user/{userId:guid}/strengths")]
@@ -243,12 +245,12 @@ public class AnalysisResultsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return Unauthorized();
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))
         {
-            return Forbid();
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
         }
 
         var analyses = await analysisResultRepository.GetByUserIdAsync(userId, ct);
@@ -256,7 +258,7 @@ public class AnalysisResultsController(
 
         if (!analysesList.Any())
         {
-            return Ok(new { strengths = Array.Empty<string>() });
+            return this.ApiOk(new { strengths = Array.Empty<string>() }, "Strengths retrieved successfully");
         }
 
         var avgFluency = analysesList.Where(a => a.FluencyScore.HasValue).Average(a => a.FluencyScore!.Value);
@@ -278,7 +280,7 @@ public class AnalysisResultsController(
             .Select(s => s.Key)
             .ToArray();
 
-        return Ok(new { strengths });
+        return this.ApiOk(new { strengths }, "Strengths retrieved successfully");
     }
 
     private Guid? GetUserId()
