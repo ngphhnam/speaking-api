@@ -16,6 +16,9 @@ public class TopicDto
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public int TotalQuestion { get; set; }
+    public int Part1QuestionCount { get; set; }
+    public int Part2QuestionCount { get; set; }
+    public int Part3QuestionCount { get; set; }
 }
 
 

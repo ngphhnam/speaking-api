@@ -1,0 +1,3184 @@
+{
+	"info": {
+		"_postman_id": "speaking-practice-api-collection",
+		"name": "Speaking Practice API",
+		"description": "Complete API collection for Speaking Practice API - IELTS Speaking Training Platform",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"John Doe\",\n  \"role\": \"Student\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"register"
+							]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+									"    pm.collectionVariables.set('userId', response.data.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Profile (Me)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"me"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"John Doe Updated\",\n  \"phone\": \"+1234567890\",\n  \"targetBandScore\": 7.5,\n  \"currentLevel\": \"intermediate\",\n  \"examDate\": \"2024-12-31T00:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"profile"
+							]
+						}
+					}
+				},
+				{
+					"name": "Upload Avatar",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "avatar",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/upload-avatar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"upload-avatar"
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Avatar",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/avatar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"avatar"
+							]
+						}
+					}
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"currentPassword\": \"OldPassword123!\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/change-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"change-password"
+							]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/refresh-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"refresh-token"
+							]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"logout"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Questions",
+			"item": [
+				{
+					"name": "Get All Questions",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions?topicId=&includeInactive=false",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions"
+							],
+							"query": [
+								{
+									"key": "topicId",
+									"value": ""
+								},
+								{
+									"key": "includeInactive",
+									"value": "false"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Question by ID",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions/:questionId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions",
+								":questionId"
+							],
+							"variable": [
+								{
+									"key": "questionId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Question",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"topicId\": \"00000000-0000-0000-0000-000000000000\",\n  \"questionText\": \"Describe a memorable journey you have taken.\",\n  \"questionType\": \"Part 2\",\n  \"suggestedStructure\": \"Introduction, Main story, Conclusion\",\n  \"sampleAnswers\": [\"Sample answer 1\", \"Sample answer 2\"],\n  \"keyVocabulary\": [\"memorable\", \"journey\", \"experience\"],\n  \"estimatedBandRequirement\": 6.5,\n  \"timeLimitSeconds\": 120\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Question",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"questionText\": \"Updated question text\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions/:questionId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions",
+								":questionId"
+							],
+							"variable": [
+								{
+									"key": "questionId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Question",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions/:questionId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions",
+								":questionId"
+							],
+							"variable": [
+								{
+									"key": "questionId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Popular Questions",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions/popular?limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions",
+								"popular"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Recommended Questions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions/recommended",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions",
+								"recommended"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Random Question by Topic",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions/topic/:topicId/random",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions",
+								"topic",
+								":topicId",
+								"random"
+							],
+							"variable": [
+								{
+									"key": "topicId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Generate Questions (AI)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"topic\": \"Technology\",\n  \"count\": 5,\n  \"partNumber\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions/generate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions",
+								"generate"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Question Statistics",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questions/:questionId/statistics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questions",
+								":questionId",
+								"statistics"
+							],
+							"variable": [
+								{
+									"key": "questionId",
+									"value": ""
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Topics",
+			"item": [
+				{
+					"name": "Get All Topics",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics?partNumber=&category=&includeInactive=false",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics"
+							],
+							"query": [
+								{
+									"key": "partNumber",
+									"value": ""
+								},
+								{
+									"key": "category",
+									"value": ""
+								},
+								{
+									"key": "includeInactive",
+									"value": "false"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Topic by ID",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics/:topicId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics",
+								":topicId"
+							],
+							"variable": [
+								{
+									"key": "topicId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Topic by Slug",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics/slug/:slug",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics",
+								"slug",
+								":slug"
+							],
+							"variable": [
+								{
+									"key": "slug",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Topic",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Technology and Innovation\",\n  \"description\": \"Topics related to technology and innovation\",\n  \"partNumber\": 1,\n  \"difficultyLevel\": \"intermediate\",\n  \"topicCategory\": \"Technology\",\n  \"keywords\": [\"technology\", \"innovation\", \"digital\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Topic",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated Topic Title\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics/:topicId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics",
+								":topicId"
+							],
+							"variable": [
+								{
+									"key": "topicId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Topic",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics/:topicId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics",
+								":topicId"
+							],
+							"variable": [
+								{
+									"key": "topicId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Popular Topics",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics/popular?limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics",
+								"popular"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Recommended Topics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics/recommended",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics",
+								"recommended"
+							]
+						}
+					}
+				},
+				{
+					"name": "Rate Topic",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rating\": 4.5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics/:topicId/rate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics",
+								":topicId",
+								"rate"
+							],
+							"variable": [
+								{
+									"key": "topicId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Topic Statistics",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Topics/:topicId/statistics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Topics",
+								":topicId",
+								"statistics"
+							],
+							"variable": [
+								{
+									"key": "topicId",
+									"value": ""
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Answers & Recordings",
+			"item": [
+				{
+					"name": "Submit Answer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "questionId",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "audio",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Answers/submit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Answers",
+								"submit"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Recordings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Recordings?userId=&questionId=&sessionId=&page=1&pageSize=20",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Recordings"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": ""
+								},
+								{
+									"key": "questionId",
+									"value": ""
+								},
+								{
+									"key": "sessionId",
+									"value": ""
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "20"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Recording by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Recordings/:recordingId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Recordings",
+								":recordingId"
+							],
+							"variable": [
+								{
+									"key": "recordingId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Recordings by User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Recordings/user/:userId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Recordings",
+								"user",
+								":userId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Recording Analysis",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Recordings/:recordingId/analysis",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Recordings",
+								":recordingId",
+								"analysis"
+							],
+							"variable": [
+								{
+									"key": "recordingId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Recording",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Recordings/:recordingId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Recordings",
+								":recordingId"
+							],
+							"variable": [
+								{
+									"key": "recordingId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Refine Response",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"targetBandScore\": 7.5,\n  \"focusAreas\": [\"grammar\", \"vocabulary\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Recordings/:recordingId/refine",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Recordings",
+								":recordingId",
+								"refine"
+							],
+							"variable": [
+								{
+									"key": "recordingId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Refinement Suggestions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Recordings/:recordingId/refinement-suggestions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Recordings",
+								":recordingId",
+								"refinement-suggestions"
+							],
+							"variable": [
+								{
+									"key": "recordingId",
+									"value": ""
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Analysis Results",
+			"item": [
+				{
+					"name": "Get Analysis by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/analysis-results/:analysisId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"analysis-results",
+								":analysisId"
+							],
+							"variable": [
+								{
+									"key": "analysisId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Analysis by Recording",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/analysis-results/recording/:recordingId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"analysis-results",
+								"recording",
+								":recordingId"
+							],
+							"variable": [
+								{
+									"key": "recordingId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User Analysis Results",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/analysis-results/user/:userId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"analysis-results",
+								"user",
+								":userId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/analysis-results/user/:userId/statistics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"analysis-results",
+								"user",
+								":userId",
+								"statistics"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Score Trends",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/analysis-results/user/:userId/trends?days=30",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"analysis-results",
+								"user",
+								":userId",
+								"trends"
+							],
+							"query": [
+								{
+									"key": "days",
+									"value": "30"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Weak Areas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/analysis-results/user/:userId/weak-areas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"analysis-results",
+								"user",
+								":userId",
+								"weak-areas"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Strengths",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/analysis-results/user/:userId/strengths",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"analysis-results",
+								"user",
+								":userId",
+								"strengths"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Mock Tests",
+			"item": [
+				{
+					"name": "Start Mock Test",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"part1QuestionCount\": 3,\n  \"part2QuestionCount\": 1,\n  \"part3QuestionCount\": 4\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mock-tests/start",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"mock-tests",
+								"start"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Mock Test by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mock-tests/:mockTestId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"mock-tests",
+								":mockTestId"
+							],
+							"variable": [
+								{
+									"key": "mockTestId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Submit Part",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"part\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mock-tests/:mockTestId/submit-part",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"mock-tests",
+								":mockTestId",
+								"submit-part"
+							],
+							"variable": [
+								{
+									"key": "mockTestId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Complete Mock Test",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mock-tests/:mockTestId/complete",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"mock-tests",
+								":mockTestId",
+								"complete"
+							],
+							"variable": [
+								{
+									"key": "mockTestId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User Mock Test History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mock-tests/user/:userId/history",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"mock-tests",
+								"user",
+								":userId",
+								"history"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Mock Test",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mock-tests/:mockTestId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"mock-tests",
+								":mockTestId"
+							],
+							"variable": [
+								{
+									"key": "mockTestId",
+									"value": ""
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "User Progress",
+			"item": [
+				{
+					"name": "Get User Progress",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-progress/user/:userId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-progress",
+								"user",
+								":userId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Daily Progress",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-progress/user/:userId/daily",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-progress",
+								"user",
+								":userId",
+								"daily"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Weekly Progress",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-progress/user/:userId/weekly",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-progress",
+								"user",
+								":userId",
+								"weekly"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Monthly Progress",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-progress/user/:userId/monthly",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-progress",
+								"user",
+								":userId",
+								"monthly"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-progress/user/:userId/statistics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-progress",
+								"user",
+								":userId",
+								"statistics"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Trends",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-progress/user/:userId/trends?periodType=daily&periods=30",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-progress",
+								"user",
+								":userId",
+								"trends"
+							],
+							"query": [
+								{
+									"key": "periodType",
+									"value": "daily"
+								},
+								{
+									"key": "periods",
+									"value": "30"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Improvement",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-progress/user/:userId/improvement",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-progress",
+								"user",
+								":userId",
+								"improvement"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Leaderboard",
+			"item": [
+				{
+					"name": "Get Top Scores",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Leaderboard/top-scores?period=all&limit=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Leaderboard",
+								"top-scores"
+							],
+							"query": [
+								{
+									"key": "period",
+									"value": "all",
+									"description": "all, week, month"
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Top Streaks",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Leaderboard/top-streaks?limit=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Leaderboard",
+								"top-streaks"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Top Practice Time",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Leaderboard/top-practice-time?period=month&limit=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Leaderboard",
+								"top-practice-time"
+							],
+							"query": [
+								{
+									"key": "period",
+									"value": "month",
+									"description": "week, month, all"
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get My Rank",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Leaderboard/my-rank?category=score&period=all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Leaderboard",
+								"my-rank"
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "score",
+									"description": "score, streak, practice-time"
+								},
+								{
+									"key": "period",
+									"value": "all"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "User Settings",
+			"item": [
+				{
+					"name": "Get Settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-settings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-settings"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Settings",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"targetBandScore\": 7.5,\n  \"currentLevel\": \"intermediate\",\n  \"examDate\": \"2024-12-31T00:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/user-settings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-settings"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Notification Preferences",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-settings/notification-preferences",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-settings",
+								"notification-preferences"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Notification Preferences",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"emailNotifications\": true,\n  \"practiceReminders\": true,\n  \"achievementNotifications\": true,\n  \"weeklySummary\": true,\n  \"streakReminders\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/user-settings/notification-preferences",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-settings",
+								"notification-preferences"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Practice Preferences",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user-settings/practice-preferences",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-settings",
+								"practice-preferences"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Practice Preferences",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"recordingQuality\": \"high\",\n  \"autoSubmit\": false,\n  \"feedbackDetailLevel\": \"detailed\",\n  \"preferredAIModel\": \"llama\",\n  \"showHints\": true,\n  \"enableTimer\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/user-settings/practice-preferences",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user-settings",
+								"practice-preferences"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Vocabulary",
+			"item": [
+				{
+					"name": "Get All Vocabulary",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Vocabulary?minBand=&maxBand=&topicCategory=&search=",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Vocabulary"
+							],
+							"query": [
+								{
+									"key": "minBand",
+									"value": ""
+								},
+								{
+									"key": "maxBand",
+									"value": ""
+								},
+								{
+									"key": "topicCategory",
+									"value": ""
+								},
+								{
+									"key": "search",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Vocabulary by ID",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Vocabulary/:vocabularyId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Vocabulary",
+								":vocabularyId"
+							],
+							"variable": [
+								{
+									"key": "vocabularyId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search Vocabulary",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Vocabulary/search?q=",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Vocabulary",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Vocabulary",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"word\": \"sophisticated\",\n  \"phonetic\": \"/səˈfɪstɪkeɪtɪd/\",\n  \"partOfSpeech\": \"adjective\",\n  \"definitionEn\": \"Having a refined knowledge of culture and fashion\",\n  \"definitionVi\": \"Tinh tế, phức tạp\",\n  \"ieltsBandLevel\": 7.0,\n  \"topicCategories\": [\"General\"],\n  \"exampleSentences\": [\"She has a sophisticated taste in art.\"],\n  \"synonyms\": [\"refined\", \"cultured\"],\n  \"antonyms\": [\"simple\", \"naive\"],\n  \"collocations\": [\"sophisticated approach\", \"sophisticated technology\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Vocabulary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Vocabulary"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Vocabulary",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"definitionEn\": \"Updated definition\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Vocabulary/:vocabularyId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Vocabulary",
+								":vocabularyId"
+							],
+							"variable": [
+								{
+									"key": "vocabularyId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Vocabulary",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Vocabulary/:vocabularyId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Vocabulary",
+								":vocabularyId"
+							],
+							"variable": [
+								{
+									"key": "vocabularyId",
+									"value": ""
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "User Vocabulary",
+			"item": [
+				{
+					"name": "Get User Vocabulary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserVocabulary/user/:userId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserVocabulary",
+								"user",
+								":userId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Learning Vocabulary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserVocabulary/user/:userId/learning",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserVocabulary",
+								"user",
+								":userId",
+								"learning"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Mastered Vocabulary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserVocabulary/user/:userId/mastered",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserVocabulary",
+								"user",
+								":userId",
+								"mastered"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Due For Review",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserVocabulary/user/:userId/due-for-review",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserVocabulary",
+								"user",
+								":userId",
+								"due-for-review"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Add Vocabulary to User List",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"vocabularyId\": \"00000000-0000-0000-0000-000000000000\",\n  \"personalNotes\": \"Need to practice this word\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/UserVocabulary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserVocabulary"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update User Vocabulary",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learningStatus\": \"mastered\",\n  \"personalNotes\": \"Mastered this word!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/UserVocabulary/:userVocabularyId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserVocabulary",
+								":userVocabularyId"
+							],
+							"variable": [
+								{
+									"key": "userVocabularyId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Mark as Reviewed",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "true"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/UserVocabulary/:userVocabularyId/review",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserVocabulary",
+								":userVocabularyId",
+								"review"
+							],
+							"variable": [
+								{
+									"key": "userVocabularyId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Vocabulary Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserVocabulary/user/:userId/statistics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserVocabulary",
+								"user",
+								":userId",
+								"statistics"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Achievements",
+			"item": [
+				{
+					"name": "Get All Achievements",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Achievements",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Achievements"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Achievement by ID",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Achievements/:achievementId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Achievements",
+								":achievementId"
+							],
+							"variable": [
+								{
+									"key": "achievementId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Active Achievements",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Achievements/active",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Achievements",
+								"active"
+							]
+						}
+					}
+				},
+				{
+					"name": "Upload Badge Icon (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "badgeIcon",
+									"type": "file",
+									"src": [],
+									"description": "Badge icon image file (max 5MB, formats: JPEG, PNG, GIF, WEBP, SVG)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Achievements/upload-badge-icon",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Achievements",
+								"upload-badge-icon"
+							]
+						},
+						"description": "Upload a badge icon to MinIO and get the URL (Admin role required). Use this URL when creating or updating achievements."
+					}
+				},
+				{
+					"name": "Create Achievement (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"First Steps\",\n  \"description\": \"Complete your first speaking practice session\",\n  \"achievementType\": \"milestone\",\n  \"requirementCriteria\": \"{\\\"type\\\": \\\"session_count\\\", \\\"target\\\": 1}\",\n  \"points\": 10,\n  \"badgeIconUrl\": \"http://localhost:9000/avatars/badges/badge_xxx.png\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Achievements",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Achievements"
+							]
+						},
+						"description": "Create a new achievement (Admin role required). Upload badge icon first to get the URL."
+					}
+				},
+				{
+					"name": "Update Achievement (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"First Steps - Updated\",\n  \"description\": \"Complete your first speaking practice session (updated)\",\n  \"achievementType\": \"milestone\",\n  \"requirementCriteria\": \"{\\\"type\\\": \\\"session_count\\\", \\\"target\\\": 1}\",\n  \"points\": 15,\n  \"badgeIconUrl\": \"http://localhost:9000/avatars/badges/badge_xxx.png\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Achievements/:achievementId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Achievements",
+								":achievementId"
+							],
+							"variable": [
+								{
+									"key": "achievementId",
+									"value": "",
+									"description": "The achievement ID to update"
+								}
+							]
+						},
+						"description": "Update an existing achievement (Admin role required)"
+					}
+				},
+				{
+					"name": "Upload and Update Badge Icon (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "badgeIcon",
+									"type": "file",
+									"src": [],
+									"description": "Badge icon image file (max 5MB)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Achievements/:achievementId/upload-badge-icon",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Achievements",
+								":achievementId",
+								"upload-badge-icon"
+							],
+							"variable": [
+								{
+									"key": "achievementId",
+									"value": "",
+									"description": "The achievement ID to update badge icon"
+								}
+							]
+						},
+						"description": "Upload and update badge icon for an existing achievement (Admin role required)"
+					}
+				},
+				{
+					"name": "Delete Achievement (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Achievements/:achievementId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Achievements",
+								":achievementId"
+							],
+							"variable": [
+								{
+									"key": "achievementId",
+									"value": "",
+									"description": "The achievement ID to delete"
+								}
+							]
+						},
+						"description": "Delete an achievement (Admin role required)"
+					}
+				},
+				{
+					"name": "Get User Achievements",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserAchievements/user/:userId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserAchievements",
+								"user",
+								":userId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Completed Achievements",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserAchievements/user/:userId/completed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserAchievements",
+								"user",
+								":userId",
+								"completed"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get In-Progress Achievements",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserAchievements/user/:userId/in-progress",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserAchievements",
+								"user",
+								":userId",
+								"in-progress"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Speaking Sessions",
+			"item": [
+				{
+					"name": "Get All Sessions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/session/speaking-session?userId=",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"session",
+								"speaking-session"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Session by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/session/speaking-session/:sessionId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"session",
+								"speaking-session",
+								":sessionId"
+							],
+							"variable": [
+								{
+									"key": "sessionId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User Session Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/session/speaking-session/user/:userId/statistics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"session",
+								"speaking-session",
+								"user",
+								":userId",
+								"statistics"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Active Sessions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/session/speaking-session/user/:userId/active",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"session",
+								"speaking-session",
+								"user",
+								":userId",
+								"active"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Completed Sessions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/session/speaking-session/user/:userId/completed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"session",
+								"speaking-session",
+								"user",
+								":userId",
+								"completed"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "User Drafts",
+			"item": [
+				{
+					"name": "Get User Drafts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserDrafts/user/:userId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserDrafts",
+								"user",
+								":userId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Draft by Question",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserDrafts/user/:userId/question/:questionId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserDrafts",
+								"user",
+								":userId",
+								"question",
+								":questionId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								},
+								{
+									"key": "questionId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Save Draft",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"questionId\": \"00000000-0000-0000-0000-000000000000\",\n  \"draftContent\": \"My draft answer...\",\n  \"outlineStructure\": \"Introduction, Body, Conclusion\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/UserDrafts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserDrafts"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Draft",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"draftContent\": \"Updated draft content\",\n  \"outlineStructure\": \"Updated outline\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/UserDrafts/:draftId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserDrafts",
+								":draftId"
+							],
+							"variable": [
+								{
+									"key": "draftId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Draft",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/UserDrafts/:draftId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"UserDrafts",
+								":draftId"
+							],
+							"variable": [
+								{
+									"key": "draftId",
+									"value": ""
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Get Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/users?page=1&pageSize=20&role=&search=",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "role",
+									"value": ""
+								},
+								{
+									"key": "search",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Assign Role",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"role\": \"Teacher\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/users/:userId/roles",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"users",
+								":userId",
+								"roles"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Lock User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/users/:userId/lock",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"users",
+								":userId",
+								"lock"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Unlock User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/users/:userId/unlock",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"users",
+								":userId",
+								"unlock"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get API Usage Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/api-usage-logs?page=1&pageSize=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"api-usage-logs"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "50"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get API Usage Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/api-usage-logs/statistics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"api-usage-logs",
+								"statistics"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get API Costs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/api-usage-logs/costs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"api-usage-logs",
+								"costs"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Audit Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/audit-logs?page=1&pageSize=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"audit-logs"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "50"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Health & Utilities",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Health"
+							]
+						}
+					}
+				},
+				{
+					"name": "Check Dependencies",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Health/dependencies",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Health",
+								"dependencies"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Routes",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Routes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Routes"
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}
+

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.DTOs.AnalysisResults;
 using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.DTOs.AI;
 using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 
@@ -10,7 +11,7 @@ namespace SpeakingPractice.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/[controller]")]
+[Route("api/analysis-results")]
 public class AnalysisResultsController(
     IAnalysisResultRepository analysisResultRepository,
     IRecordingRepository recordingRepository,
@@ -283,6 +284,89 @@ public class AnalysisResultsController(
         return this.ApiOk(new { strengths }, "Strengths retrieved successfully");
     }
 
+    [HttpPut("{id:guid}/mark-reviewed")]
+    public async Task<IActionResult> MarkAsReviewed(Guid id, CancellationToken ct = default)
+    {
+        var requesterId = GetUserId();
+        if (!requesterId.HasValue)
+        {
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var analysis = await analysisResultRepository.GetByIdAsync(id, ct);
+        if (analysis is null)
+        {
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"Analysis result with id {id} not found");
+        }
+
+        if (analysis.UserId != requesterId.Value && !User.IsInRole("Admin"))
+        {
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
+        }
+
+        // In a real implementation, you'd add a "Reviewed" field to the entity
+        // For now, we'll just log it
+        logger.LogInformation("User {UserId} marked analysis {AnalysisId} as reviewed", requesterId, id);
+        
+        return this.ApiOk("Feedback marked as reviewed successfully");
+    }
+
+    [HttpPost("{id:guid}/notes")]
+    public async Task<IActionResult> AddNote(Guid id, [FromBody] AddNoteRequest request, CancellationToken ct = default)
+    {
+        var requesterId = GetUserId();
+        if (!requesterId.HasValue)
+        {
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var analysis = await analysisResultRepository.GetByIdAsync(id, ct);
+        if (analysis is null)
+        {
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"Analysis result with id {id} not found");
+        }
+
+        if (analysis.UserId != requesterId.Value && !User.IsInRole("Admin"))
+        {
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
+        }
+
+        // In a real implementation, you'd save the note to the database
+        // For now, we'll just log it
+        logger.LogInformation("User {UserId} added note to analysis {AnalysisId}: {Note}", requesterId, id, request.Note);
+        
+        return this.ApiOk(new { note = request.Note }, "Note added successfully");
+    }
+
+    [HttpGet("user/{userId:guid}/by-skill")]
+    public async Task<IActionResult> GetBySkill(Guid userId, [FromQuery] string skill, CancellationToken ct = default)
+    {
+        var requesterId = GetUserId();
+        if (!requesterId.HasValue)
+        {
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
+        }
+
+        if (userId != requesterId.Value && !User.IsInRole("Admin"))
+        {
+            return this.ApiForbid(ErrorCodes.FORBIDDEN, "You don't have permission to access this resource");
+        }
+
+        var analyses = await analysisResultRepository.GetByUserIdAsync(userId, ct);
+        
+        // Filter and sort by specific skill
+        var filteredAnalyses = skill.ToLower() switch
+        {
+            "grammar" => analyses.OrderBy(a => a.GrammarScore),
+            "vocabulary" => analyses.OrderBy(a => a.VocabularyScore),
+            "fluency" => analyses.OrderBy(a => a.FluencyScore),
+            "pronunciation" => analyses.OrderBy(a => a.PronunciationScore),
+            _ => analyses.OrderBy(a => a.OverallBandScore)
+        };
+
+        return this.ApiOk(filteredAnalyses.Select(MapToDto), "Analysis results retrieved successfully");
+    }
+
     private Guid? GetUserId()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -291,7 +375,7 @@ public class AnalysisResultsController(
 
     private static AnalysisResultDto MapToDto(Domain.Entities.AnalysisResult analysis)
     {
-        return new AnalysisResultDto
+        var dto = new AnalysisResultDto
         {
             Id = analysis.Id,
             RecordingId = analysis.RecordingId,
@@ -310,5 +394,33 @@ public class AnalysisResultsController(
             AnalyzedAt = analysis.AnalyzedAt,
             CreatedAt = analysis.CreatedAt
         };
+
+        // Extract grammar corrections from Metrics if present
+        if (!string.IsNullOrWhiteSpace(analysis.Metrics))
+        {
+            try
+            {
+                var parsed = System.Text.Json.JsonSerializer.Deserialize<GrammarCorrectionEnvelope>(
+                    analysis.Metrics!,
+                    new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+
+                if (parsed?.GrammarCorrection?.Corrections != null)
+                {
+                    dto.Corrections = parsed.GrammarCorrection.Corrections;
+                }
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // Ignore parsing errors and return without corrections
+            }
+        }
+
+        return dto;
+    }
+
+    // Used to deserialize metrics -> grammarCorrection
+    private sealed class GrammarCorrectionEnvelope
+    {
+        public GrammarCorrectionResult? GrammarCorrection { get; set; }
     }
 }

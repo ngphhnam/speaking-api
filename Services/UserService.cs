@@ -11,7 +11,23 @@ public class UserService(UserManager<ApplicationUser> userManager) : IUserServic
     {
         var roles = await userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? string.Empty;
-        return new UserDto(user.Id, user.Email ?? string.Empty, user.FullName, role);
+        return new UserDto(
+            user.Id, 
+            user.Email ?? string.Empty, 
+            user.FullName, 
+            role,
+            user.Bio,
+            user.AvatarUrl,
+            user.Phone,
+            user.DateOfBirth,
+            user.TargetBandScore,
+            user.CurrentLevel,
+            user.ExamDate,
+            user.CurrentStreak,
+            user.LongestStreak,
+            user.LastPracticeDate,
+            user.TotalPracticeDays
+        );
     }
 }
 

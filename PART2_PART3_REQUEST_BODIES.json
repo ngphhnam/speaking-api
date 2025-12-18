@@ -1,0 +1,285 @@
+{
+  "workflow": "1. Create Topic → 2. Add Part 2 Cue Card → 3. Add Part 3 Questions (4-6)",
+  
+  "step1_create_part2_topic": {
+    "method": "POST",
+    "endpoint": "/api/topics",
+    "body": {
+      "title": "Describe a Person You Admire",
+      "slug": "describe-person-admire",
+      "description": "Describe a person who has influenced you or someone you admire",
+      "partNumber": 2,
+      "difficultyLevel": "intermediate",
+      "topicCategory": "people",
+      "keywords": ["person", "admire", "influence", "role model", "inspiration"]
+    },
+    "note": "Save the 'id' from response to use in next steps!"
+  },
+
+  "step2_add_part2_cue_card": {
+    "method": "POST",
+    "endpoint": "/api/topics/{topicId}/questions",
+    "body": {
+      "questionText": "Describe a person you admire.\n\nYou should say:\n• who this person is\n• how you know this person\n• what this person is like\n• and explain why you admire this person",
+      "questionType": "Part 2",
+      "timeLimitSeconds": 120,
+      "suggestedStructure": "{\"intro\":\"I'd like to talk about...\",\"point1\":\"First, regarding who this person is...\",\"point2\":\"I first met/knew this person when...\",\"point3\":\"As for what they're like...\",\"conclusion\":\"The reason I admire them is...\"}",
+      "sampleAnswers": [
+        "I'd like to talk about my high school English teacher, Ms. Nguyen. She taught me for three years and had a huge impact on my life. She's incredibly patient, passionate about teaching, and always goes the extra mile to help students. What I admire most is her dedication and the way she inspired me to pursue my dreams. She never gave up on any student and always believed in their potential. Thanks to her, I developed a love for English and decided to continue studying it at university."
+      ],
+      "keyVocabulary": [
+        "admire",
+        "role model",
+        "inspiring",
+        "influential",
+        "dedicated",
+        "passionate",
+        "impact",
+        "motivated",
+        "look up to",
+        "shaped my life"
+      ],
+      "estimatedBandRequirement": 6.0
+    }
+  },
+
+  "step3_add_part3_questions": {
+    "method": "POST",
+    "endpoint": "/api/topics/{topicId}/questions",
+    "note": "Use SAME topicId as Part 2! Add 4-6 questions.",
+    "questions": [
+      {
+        "question_1": {
+          "questionText": "What qualities make someone a good role model in your country?",
+          "questionType": "Part 3",
+          "timeLimitSeconds": 45,
+          "suggestedStructure": "{\"direct\":\"I think several qualities are important...\",\"expand\":\"For example...\",\"reason\":\"This is because...\",\"conclusion\":\"Overall...\"}",
+          "sampleAnswers": [
+            "I think several qualities make someone a good role model in Vietnam. Firstly, integrity is crucial - they should practice what they preach and be honest in their dealings. Secondly, they need to be hardworking and show dedication to their work or cause. Vietnamese people especially respect those who have overcome difficulties through perseverance and stayed humble despite their success. Additionally, being family-oriented and respecting traditional values is highly valued. Finally, contributing to society, whether through charity work or helping others, is seen as a mark of a true role model."
+          ],
+          "keyVocabulary": [
+            "qualities",
+            "role model",
+            "integrity",
+            "dedication",
+            "perseverance",
+            "humble",
+            "contribute to society",
+            "values"
+          ],
+          "estimatedBandRequirement": 6.5
+        }
+      },
+      {
+        "question_2": {
+          "questionText": "Do you think celebrities have a responsibility to be good role models?",
+          "questionType": "Part 3",
+          "timeLimitSeconds": 45,
+          "suggestedStructure": "{\"opinion\":\"Yes/No, I believe...\",\"reason\":\"This is because...\",\"example\":\"For instance...\",\"counterpoint\":\"However...\"}",
+          "sampleAnswers": [
+            "Yes, I believe celebrities do have a responsibility to be good role models, especially if they have young fans. They have chosen to be in the public eye and enjoy the benefits of fame, so they should accept the responsibilities that come with it. Their actions and words can significantly influence people, particularly young and impressionable fans. However, I also think we shouldn't put unrealistic expectations on them - they're human and will make mistakes. The key is how they handle their mistakes and whether they generally try to have a positive influence on their audience."
+          ],
+          "keyVocabulary": [
+            "celebrities",
+            "responsibility",
+            "influence",
+            "public eye",
+            "role models",
+            "impact",
+            "impressionable",
+            "positive influence"
+          ],
+          "estimatedBandRequirement": 7.0
+        }
+      },
+      {
+        "question_3": {
+          "questionText": "How has the concept of a role model changed over the years?",
+          "questionType": "Part 3",
+          "timeLimitSeconds": 50,
+          "suggestedStructure": "{\"past\":\"In the past...\",\"present\":\"Nowadays...\",\"comparison\":\"The main difference is...\",\"reason\":\"This change is due to...\"}",
+          "sampleAnswers": [
+            "The concept of role models has changed quite dramatically over the years. In the past, role models were typically historical figures, political leaders, or local community members like teachers and doctors. Today, with the rise of social media and the entertainment industry, many young people look up to celebrities, influencers, and YouTube stars. The criteria have also shifted - it's now often about success, wealth, and fame rather than moral character or contribution to society. Additionally, role models have become more accessible through social media, but this also means their flaws and mistakes are more visible. I think this change reflects broader societal shifts in values and how we communicate."
+          ],
+          "keyVocabulary": [
+            "dramatically",
+            "evolved",
+            "social media",
+            "influencers",
+            "criteria",
+            "shifted",
+            "accessible",
+            "visible",
+            "societal shifts"
+          ],
+          "estimatedBandRequirement": 7.5
+        }
+      },
+      {
+        "question_4": {
+          "questionText": "In what ways can parents influence their children to become better people?",
+          "questionType": "Part 3",
+          "timeLimitSeconds": 50,
+          "suggestedStructure": "{\"main\":\"Parents can influence in several ways...\",\"method1\":\"Firstly...\",\"method2\":\"Secondly...\",\"method3\":\"Additionally...\",\"conclusion\":\"In conclusion...\"}",
+          "sampleAnswers": [
+            "Parents can influence their children in numerous ways. Most importantly, they should lead by example - children learn more from what parents do than what they say. Showing values like honesty, kindness, and hard work in daily life teaches children these principles naturally. Parents should also provide guidance while allowing children to make their own decisions and learn from mistakes. Creating a supportive environment where children feel safe to express themselves is crucial. Additionally, encouraging education, teaching respect for others, and exposing children to diverse experiences can broaden their perspectives. Finally, spending quality time together and having open conversations helps build strong relationships and trust."
+          ],
+          "keyVocabulary": [
+            "influence",
+            "lead by example",
+            "values",
+            "guidance",
+            "supportive environment",
+            "perspectives",
+            "diverse experiences",
+            "relationships"
+          ],
+          "estimatedBandRequirement": 7.0
+        }
+      }
+    ]
+  },
+
+  "more_examples": {
+    "topic_place": {
+      "step1_topic": {
+        "title": "Describe a Place You Visited",
+        "slug": "describe-place-visited",
+        "description": "Describe a memorable place you have visited",
+        "partNumber": 2,
+        "difficultyLevel": "intermediate",
+        "topicCategory": "places",
+        "keywords": ["place", "visit", "travel", "location", "destination"]
+      },
+      "step2_cue_card": {
+        "questionText": "Describe a place you visited that you found interesting.\n\nYou should say:\n• where it is\n• when you went there\n• what you did there\n• and explain why you found it interesting",
+        "questionType": "Part 2",
+        "timeLimitSeconds": 120,
+        "sampleAnswers": [
+          "I'd like to describe the ancient town of Hoi An, which is located in central Vietnam. I visited there last summer with my family for a 3-day trip. During our visit, we explored the old streets with their beautiful yellow buildings, visited traditional craft workshops, and enjoyed the lantern festival at night. What made it so interesting was the perfect blend of history and culture. The town has preserved its traditional architecture wonderfully, and you can really feel the atmosphere of old Vietnam. The food was amazing too, and the local people were incredibly friendly."
+        ],
+        "keyVocabulary": ["ancient", "historic", "traditional", "architecture", "heritage", "atmosphere", "preserved"]
+      },
+      "step3_part3_questions": [
+        {
+          "questionText": "Why do people like to visit tourist attractions?",
+          "questionType": "Part 3",
+          "timeLimitSeconds": 45
+        },
+        {
+          "questionText": "How has tourism changed in your country over the years?",
+          "questionType": "Part 3",
+          "timeLimitSeconds": 45
+        },
+        {
+          "questionText": "What are the advantages and disadvantages of tourism for local people?",
+          "questionType": "Part 3",
+          "timeLimitSeconds": 50
+        },
+        {
+          "questionText": "Do you think virtual tourism will replace physical travel in the future?",
+          "questionType": "Part 3",
+          "timeLimitSeconds": 50
+        }
+      ]
+    },
+
+    "topic_object": {
+      "step1_topic": {
+        "title": "Describe Something You Own",
+        "slug": "describe-something-own",
+        "description": "Describe something you own that is important to you",
+        "partNumber": 2,
+        "difficultyLevel": "intermediate",
+        "topicCategory": "objects",
+        "keywords": ["object", "possession", "important", "valuable", "belong"]
+      },
+      "step2_cue_card": {
+        "questionText": "Describe something you own that is important to you.\n\nYou should say:\n• what it is\n• when you got it\n• how you use it\n• and explain why it is important to you",
+        "questionType": "Part 2",
+        "timeLimitSeconds": 120,
+        "keyVocabulary": ["possession", "valuable", "sentimental", "meaningful", "cherish"]
+      },
+      "step3_part3_questions": [
+        {
+          "questionText": "Do you think people buy too many things nowadays?",
+          "questionType": "Part 3"
+        },
+        {
+          "questionText": "How has shopping behavior changed with technology?",
+          "questionType": "Part 3"
+        },
+        {
+          "questionText": "Is it better to buy quality items that last longer or cheaper ones?",
+          "questionType": "Part 3"
+        },
+        {
+          "questionText": "What influence does advertising have on what people buy?",
+          "questionType": "Part 3"
+        }
+      ]
+    },
+
+    "topic_event": {
+      "step1_topic": {
+        "title": "Describe a Memorable Event",
+        "slug": "describe-memorable-event",
+        "description": "Describe an event or occasion that was memorable",
+        "partNumber": 2,
+        "difficultyLevel": "intermediate",
+        "topicCategory": "events",
+        "keywords": ["event", "occasion", "memorable", "experience", "celebration"]
+      },
+      "step2_cue_card": {
+        "questionText": "Describe a memorable event in your life.\n\nYou should say:\n• when it happened\n• where it happened\n• what you did\n• and explain why it was memorable",
+        "questionType": "Part 2",
+        "timeLimitSeconds": 120,
+        "keyVocabulary": ["memorable", "unforgettable", "special", "significant", "milestone"]
+      },
+      "step3_part3_questions": [
+        {
+          "questionText": "What types of events do people celebrate in your country?",
+          "questionType": "Part 3"
+        },
+        {
+          "questionText": "Do you think traditional celebrations are still important today?",
+          "questionType": "Part 3"
+        },
+        {
+          "questionText": "How have celebrations changed over time in your country?",
+          "questionType": "Part 3"
+        },
+        {
+          "questionText": "Why do people like to celebrate special occasions?",
+          "questionType": "Part 3"
+        }
+      ]
+    }
+  },
+
+  "minimal_required_fields": {
+    "part2_cue_card_minimum": {
+      "questionText": "Describe a person you admire.\n\nYou should say:\n• who this person is\n• how you know this person\n• what this person is like\n• and explain why you admire this person",
+      "questionType": "Part 2",
+      "timeLimitSeconds": 120
+    },
+    "part3_question_minimum": {
+      "questionText": "What qualities make someone a good role model?",
+      "questionType": "Part 3",
+      "timeLimitSeconds": 45
+    }
+  },
+
+  "tips": {
+    "part2_format": "Always include: 'Describe... \\n\\nYou should say:\\n• point1\\n• point2\\n• point3\\n• and explain...'",
+    "part3_same_topic": "Part 3 questions MUST use the SAME topicId as Part 2",
+    "question_type": "Must be exactly 'Part 2' or 'Part 3' (case sensitive)",
+    "time_limit": "Part 2: 120 seconds, Part 3: 45-50 seconds",
+    "sample_answer_length": "Part 2: 100-200 words, Part 3: 80-150 words",
+    "vocabulary_count": "Include 8-10 key vocabulary words"
+  }
+}
+
+
+
+

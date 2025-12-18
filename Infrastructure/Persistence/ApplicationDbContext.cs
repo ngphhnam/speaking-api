@@ -26,6 +26,9 @@ public class ApplicationDbContext(
     public DbSet<Vocabulary> Vocabularies => Set<Vocabulary>();
     public DbSet<UserVocabulary> UserVocabularies => Set<UserVocabulary>();
     
+    // Mock tests
+    public DbSet<Controllers.MockTest> MockTests => Set<Controllers.MockTest>();
+    
     // System tables
     public DbSet<ApiUsageLog> ApiUsageLogs => Set<ApiUsageLog>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();

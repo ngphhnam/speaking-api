@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SpeakingPractice.Api.Domain.Entities;
+using SpeakingPractice.Api.Domain.Enums;
 using SpeakingPractice.Api.Infrastructure.Persistence;
 
 namespace SpeakingPractice.Api.Repositories;
@@ -38,6 +39,24 @@ public class TopicRepository(ApplicationDbContext context) : ITopicRepository
 
     public async Task<IEnumerable<Topic>> GetByPartNumberAsync(int partNumber, CancellationToken ct = default)
     {
+        // Part 3 doesn't have its own topics - it uses Part 2 topics
+        // So when filtering Part 3, we get topics that have Part 3 questions
+        if (partNumber == 3)
+        {
+            var topicIds = await context.Questions
+                .Where(q => q.QuestionType == QuestionType.PART3 && q.IsActive)
+                .Select(q => q.TopicId)
+                .Distinct()
+                .ToListAsync(ct);
+
+            return await context.Topics
+                .Where(t => topicIds.Contains(t.Id) && t.IsActive)
+                .Include(t => t.Questions.Where(q => q.IsActive && q.QuestionType == QuestionType.PART3))
+                .OrderBy(t => t.Title)
+                .ToListAsync(ct);
+        }
+
+        // For Part 1 and Part 2, query normally
         return await context.Topics
             .Where(t => t.PartNumber == partNumber && t.IsActive)
             .Include(t => t.Questions.Where(q => q.IsActive))

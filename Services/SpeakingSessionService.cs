@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using SpeakingPractice.Api.Domain.Entities;
 using SpeakingPractice.Api.DTOs.SpeakingSessions;
 using SpeakingPractice.Api.Infrastructure.Clients;
@@ -15,7 +14,7 @@ public class SpeakingSessionService(
     ISpeakingSessionRepository sessionRepository,
     IRecordingRepository recordingRepository,
     IAnalysisResultRepository analysisResultRepository,
-    UserManager<ApplicationUser> userManager,
+    IStreakService streakService,
     ILogger<SpeakingSessionService> logger) : ISpeakingSessionService
 {
     public async Task<SpeakingSessionDto> CreateSessionAsync(
@@ -23,13 +22,6 @@ public class SpeakingSessionService(
         Guid userId,
         CancellationToken ct)
     {
-        // Verify user exists
-        var user = await userManager.FindByIdAsync(userId.ToString());
-        if (user is null)
-        {
-            throw new UnauthorizedAccessException("User not found");
-        }
-
         var now = DateTimeOffset.UtcNow;
 
         var session = new PracticeSession
@@ -47,6 +39,38 @@ public class SpeakingSessionService(
 
         await sessionRepository.AddAsync(session, ct);
         await sessionRepository.SaveChangesAsync(ct);
+
+        // Update user streak when they start a practice session
+        try
+        {
+            var streakResult = await streakService.UpdateStreakAsync(userId, null, ct);
+            
+            if (streakResult.IsNewRecord)
+            {
+                logger.LogInformation(
+                    "User {UserId} achieved new longest streak: {Streak} days!", 
+                    userId, 
+                    streakResult.CurrentStreak);
+            }
+            else if (streakResult.StreakContinued)
+            {
+                logger.LogInformation(
+                    "User {UserId} continued their streak: {Streak} days", 
+                    userId, 
+                    streakResult.CurrentStreak);
+            }
+            else if (streakResult.StreakBroken)
+            {
+                logger.LogInformation(
+                    "User {UserId} restarted their streak after a break", 
+                    userId);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the session creation if streak update fails
+            logger.LogError(ex, "Failed to update streak for user {UserId}", userId);
+        }
 
         logger.LogInformation("Created speaking practice session {SessionId} for user {UserId}", session.Id, userId);
 

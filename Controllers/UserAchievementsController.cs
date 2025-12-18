@@ -13,7 +13,7 @@ namespace SpeakingPractice.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/[controller]")]
+[Route("api/user-achievements")]
 public class UserAchievementsController(
     IUserAchievementRepository userAchievementRepository,
     IAchievementRepository achievementRepository,
@@ -26,7 +26,7 @@ public class UserAchievementsController(
         var requesterId = GetUserId();
         if (!requesterId.HasValue)
         {
-            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
+            return Unauthorized();
         }
 
         if (userId != requesterId.Value && !User.IsInRole("Admin"))

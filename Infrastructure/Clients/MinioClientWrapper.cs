@@ -11,8 +11,8 @@ public class MinioClientWrapper(
     ILogger<MinioClientWrapper> logger) : IMinioClientWrapper
 {
     private readonly MinioOptions _options = options.Value;
-    private bool _bucketVerified;
     private readonly HashSet<string> _verifiedBuckets = new();
+    private readonly HashSet<string> _publicPolicyBuckets = new();
 
     public async Task<string> UploadAudioAsync(Stream fileStream, string objectName, CancellationToken ct)
     {
@@ -36,8 +36,8 @@ public class MinioClientWrapper(
 
     public async Task<string> UploadAudioAsync(Stream fileStream, string objectName, Guid userId, CancellationToken ct)
     {
-        // Create bucket name based on user ID
-        var bucketName = GetUserBucketName(userId);
+        // Use the shared audio bucket for all users
+        var bucketName = _options.Bucket;
         await EnsureBucketExistsAsync(bucketName, ct);
 
         var args = new PutObjectArgs()
@@ -49,6 +49,36 @@ public class MinioClientWrapper(
 
         await minioClient.PutObjectAsync(args, ct);
         logger.LogInformation("Uploaded {ObjectName} to MinIO bucket {Bucket} for user {UserId}", objectName, bucketName, userId);
+
+        var endpoint = _options.Endpoint.TrimEnd('/');
+        var url = $"{endpoint}/{bucketName}/{objectName}";
+        return url;
+    }
+
+    public async Task<string> UploadImageAsync(Stream fileStream, string objectName, Guid userId, CancellationToken ct)
+    {
+        var bucketName = "avatars";
+        await EnsureBucketExistsAsync(bucketName, ct);
+
+        // Determine content type from file extension
+        var contentType = objectName.ToLower() switch
+        {
+            var name when name.EndsWith(".jpg") || name.EndsWith(".jpeg") => "image/jpeg",
+            var name when name.EndsWith(".png") => "image/png",
+            var name when name.EndsWith(".gif") => "image/gif",
+            var name when name.EndsWith(".webp") => "image/webp",
+            _ => "image/jpeg"
+        };
+
+        var args = new PutObjectArgs()
+            .WithBucket(bucketName)
+            .WithObject(objectName)
+            .WithStreamData(fileStream)
+            .WithObjectSize(fileStream.Length)
+            .WithContentType(contentType);
+
+        await minioClient.PutObjectAsync(args, ct);
+        logger.LogInformation("Uploaded image {ObjectName} to MinIO bucket {Bucket} for user {UserId}", objectName, bucketName, userId);
 
         var endpoint = _options.Endpoint.TrimEnd('/');
         var url = $"{endpoint}/{bucketName}/{objectName}";
@@ -70,14 +100,38 @@ public class MinioClientWrapper(
             logger.LogInformation("Created MinIO bucket {Bucket}", bucketName);
         }
 
+        await EnsurePublicReadPolicyAsync(bucketName, ct);
         _verifiedBuckets.Add(bucketName);
     }
 
-    private string GetUserBucketName(Guid userId)
+    private async Task EnsurePublicReadPolicyAsync(string bucketName, CancellationToken ct)
     {
-        // Format: speaking-audio-user-{userId}
-        // MinIO bucket names must be lowercase and can contain hyphens
-        return $"{_options.Bucket}-user-{userId.ToString().ToLowerInvariant()}";
+        if (_publicPolicyBuckets.Contains(bucketName))
+        {
+            return;
+        }
+
+        // Allow public read on all objects in the bucket
+        var policyJson = $$"""
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "AWS": ["*"] },
+              "Action": [ "s3:GetObject" ],
+              "Resource": [ "arn:aws:s3:::{{bucketName}}/*" ]
+            }
+          ]
+        }
+        """;
+
+        await minioClient.SetPolicyAsync(new SetPolicyArgs()
+            .WithBucket(bucketName)
+            .WithPolicy(policyJson), ct);
+
+        _publicPolicyBuckets.Add(bucketName);
+        logger.LogInformation("Ensured public-read policy for MinIO bucket {Bucket}", bucketName);
     }
 }
 

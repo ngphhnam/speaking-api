@@ -5,17 +5,25 @@ namespace SpeakingPractice.Api.Domain.Entities;
 public class ApplicationUser : IdentityUser<Guid>
 {
     public string FullName { get; set; } = default!;
+    public string? Bio { get; set; }
     public string? AvatarUrl { get; set; }
     public string? Phone { get; set; }
-    public DateTime? DateOfBirth { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
     public decimal? TargetBandScore { get; set; }
     public string? CurrentLevel { get; set; } // 'beginner', 'intermediate', 'advanced'
-    public DateTime? ExamDate { get; set; }
+    public DateOnly? ExamDate { get; set; }
     public string SubscriptionType { get; set; } = "free";
     public DateTime? SubscriptionExpiresAt { get; set; }
     public bool EmailVerified { get; set; } = false;
     public bool IsActive { get; set; } = true;
     public DateTime? LastLoginAt { get; set; }
+    
+    // Streak tracking
+    public int CurrentStreak { get; set; } = 0;
+    public int LongestStreak { get; set; } = 0;
+    public DateOnly? LastPracticeDate { get; set; }
+    public int TotalPracticeDays { get; set; } = 0;
+    
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 

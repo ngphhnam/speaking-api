@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.DTOs.Achievements;
 using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Clients;
 using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 
@@ -11,6 +12,7 @@ namespace SpeakingPractice.Api.Controllers;
 [Route("api/[controller]")]
 public class AchievementsController(
     IAchievementRepository achievementRepository,
+    IMinioClientWrapper minioClient,
     ILogger<AchievementsController> logger) : ControllerBase
 {
     [HttpGet]
@@ -109,6 +111,111 @@ public class AchievementsController(
 
         logger.LogInformation("Deleted achievement {AchievementId}", id);
         return this.ApiOk("Achievement deleted successfully");
+    }
+
+    [HttpPost("upload-badge-icon")]
+    [Authorize(Roles = "Admin")]
+    [RequestSizeLimit(5_000_000)] // 5MB limit
+    public async Task<IActionResult> UploadBadgeIcon([FromForm] IFormFile badgeIcon, CancellationToken ct = default)
+    {
+        if (badgeIcon is null || badgeIcon.Length == 0)
+        {
+            return this.ApiBadRequest(ErrorCodes.REQUIRED_FIELD_MISSING, "Badge icon file is required");
+        }
+
+        // Validate file type
+        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml" };
+        if (!allowedTypes.Contains(badgeIcon.ContentType.ToLower()))
+        {
+            return this.ApiBadRequest(ErrorCodes.INVALID_VALUE, "Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP, SVG");
+        }
+
+        // Validate file size (max 5MB)
+        if (badgeIcon.Length > 5_000_000)
+        {
+            return this.ApiBadRequest(ErrorCodes.INVALID_VALUE, "File size exceeds 5MB limit");
+        }
+
+        try
+        {
+            // Generate unique filename
+            var extension = Path.GetExtension(badgeIcon.FileName);
+            var objectName = $"badges/badge_{Guid.NewGuid()}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}{extension}";
+
+            // Upload to MinIO
+            string badgeIconUrl;
+            using (var stream = badgeIcon.OpenReadStream())
+            {
+                badgeIconUrl = await minioClient.UploadImageAsync(stream, objectName, Guid.Empty, ct);
+            }
+
+            logger.LogInformation("Uploaded badge icon: {BadgeIconUrl}", badgeIconUrl);
+            
+            return this.ApiOk(new { badgeIconUrl }, "Badge icon uploaded successfully");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error uploading badge icon");
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to upload badge icon", new Dictionary<string, object> { { "details", ex.Message } });
+        }
+    }
+
+    [HttpPost("{id:guid}/upload-badge-icon")]
+    [Authorize(Roles = "Admin")]
+    [RequestSizeLimit(5_000_000)] // 5MB limit
+    public async Task<IActionResult> UploadAndUpdateBadgeIcon(Guid id, [FromForm] IFormFile badgeIcon, CancellationToken ct = default)
+    {
+        var achievement = await achievementRepository.GetByIdAsync(id, ct);
+        if (achievement is null)
+        {
+            return this.ApiNotFound(ErrorCodes.NOT_FOUND, $"Achievement with id {id} not found");
+        }
+
+        if (badgeIcon is null || badgeIcon.Length == 0)
+        {
+            return this.ApiBadRequest(ErrorCodes.REQUIRED_FIELD_MISSING, "Badge icon file is required");
+        }
+
+        // Validate file type
+        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml" };
+        if (!allowedTypes.Contains(badgeIcon.ContentType.ToLower()))
+        {
+            return this.ApiBadRequest(ErrorCodes.INVALID_VALUE, "Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP, SVG");
+        }
+
+        // Validate file size (max 5MB)
+        if (badgeIcon.Length > 5_000_000)
+        {
+            return this.ApiBadRequest(ErrorCodes.INVALID_VALUE, "File size exceeds 5MB limit");
+        }
+
+        try
+        {
+            // Generate unique filename
+            var extension = Path.GetExtension(badgeIcon.FileName);
+            var objectName = $"badges/badge_{id}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}{extension}";
+
+            // Upload to MinIO
+            string badgeIconUrl;
+            using (var stream = badgeIcon.OpenReadStream())
+            {
+                badgeIconUrl = await minioClient.UploadImageAsync(stream, objectName, Guid.Empty, ct);
+            }
+
+            // Update achievement with new badge icon URL
+            achievement.BadgeIconUrl = badgeIconUrl;
+            await achievementRepository.UpdateAsync(achievement, ct);
+            await achievementRepository.SaveChangesAsync(ct);
+
+            logger.LogInformation("Updated badge icon for achievement {AchievementId}: {BadgeIconUrl}", id, badgeIconUrl);
+            
+            return this.ApiOk(new { badgeIconUrl, achievement = MapToDto(achievement) }, "Badge icon uploaded and updated successfully");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error uploading badge icon for achievement {AchievementId}", id);
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to upload badge icon", new Dictionary<string, object> { { "details", ex.Message } });
+        }
     }
 
     private static AchievementDto MapToDto(Domain.Entities.Achievement achievement)

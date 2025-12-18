@@ -8,7 +8,7 @@ using SpeakingPractice.Api.Repositories;
 namespace SpeakingPractice.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/vocabulary")]
 public class VocabularyController(
     IVocabularyRepository vocabularyRepository,
     ITopicRepository topicRepository,

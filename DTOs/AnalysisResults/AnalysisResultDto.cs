@@ -1,3 +1,5 @@
+using SpeakingPractice.Api.DTOs.AI;
+
 namespace SpeakingPractice.Api.DTOs.AnalysisResults;
 
 public class AnalysisResultDto
@@ -16,6 +18,8 @@ public class AnalysisResultDto
     public string[]? GrammarIssues { get; set; }
     public string[]? PronunciationIssues { get; set; }
     public string[]? VocabularySuggestions { get; set; }
+    // Flattened grammar corrections extracted from Metrics (if available)
+    public List<GrammarCorrection>? Corrections { get; set; }
     public DateTimeOffset AnalyzedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

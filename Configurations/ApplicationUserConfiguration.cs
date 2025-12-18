@@ -12,6 +12,7 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         // We only configure additional custom properties here
 
         builder.Property(u => u.FullName).HasColumnName("full_name").HasMaxLength(255).IsRequired();
+        builder.Property(u => u.Bio).HasColumnName("bio").HasMaxLength(1000);
         builder.Property(u => u.AvatarUrl).HasColumnName("avatar_url").HasMaxLength(500);
         builder.Property(u => u.Phone).HasColumnName("phone").HasMaxLength(20);
         builder.Property(u => u.DateOfBirth).HasColumnName("date_of_birth");
@@ -23,12 +24,25 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Property(u => u.EmailVerified).HasColumnName("email_verified").HasDefaultValue(false);
         builder.Property(u => u.IsActive).HasColumnName("is_active").HasDefaultValue(true);
         builder.Property(u => u.LastLoginAt).HasColumnName("last_login_at");
+        
+        // Streak tracking
+        builder.Property(u => u.CurrentStreak).HasColumnName("current_streak").HasDefaultValue(0);
+        builder.Property(u => u.LongestStreak).HasColumnName("longest_streak").HasDefaultValue(0);
+        builder.Property(u => u.LastPracticeDate).HasColumnName("last_practice_date");
+        builder.Property(u => u.TotalPracticeDays).HasColumnName("total_practice_days").HasDefaultValue(0);
+        
         builder.Property(u => u.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(u => u.UpdatedAt).HasColumnName("updated_at").IsRequired();
 
         // Indexes
         builder.HasIndex(u => new { u.SubscriptionType, u.SubscriptionExpiresAt })
             .HasFilter("\"is_active\" = true");
+        
+        // Index for streak leaderboard (descending order, active users only)
+        builder.HasIndex(u => u.CurrentStreak)
+            .HasDatabaseName("idx_users_current_streak")
+            .IsDescending()
+            .HasFilter("\"is_active\" = true AND \"current_streak\" > 0");
     }
 }
 

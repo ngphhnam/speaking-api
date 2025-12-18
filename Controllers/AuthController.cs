@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.Domain.Entities;
 using SpeakingPractice.Api.DTOs.Auth;
 using SpeakingPractice.Api.DTOs.Common;
+using SpeakingPractice.Api.Infrastructure.Clients;
 using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
 using SpeakingPractice.Api.Services.Interfaces;
@@ -20,6 +21,7 @@ public class AuthController(
     ITokenService tokenService,
     IUserService userService,
     IRefreshTokenRepository refreshTokenRepository,
+    IMinioClientWrapper minioClient,
     ILogger<AuthController> logger) : ControllerBase
 {
     private static readonly string[] DefaultRoles = ["Student", "Teacher", "Admin"];
@@ -201,6 +203,13 @@ public class AuthController(
             user.FullName = request.FullName;
         }
 
+        if (request.Bio is not null) user.Bio = request.Bio;
+        if (request.Phone is not null) user.Phone = request.Phone;
+        if (request.DateOfBirth.HasValue) user.DateOfBirth = request.DateOfBirth;
+        if (request.TargetBandScore.HasValue) user.TargetBandScore = request.TargetBandScore;
+        if (request.CurrentLevel is not null) user.CurrentLevel = request.CurrentLevel;
+        if (request.ExamDate.HasValue) user.ExamDate = request.ExamDate;
+
         user.UpdatedAt = DateTimeOffset.UtcNow;
         var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded)
@@ -210,7 +219,7 @@ public class AuthController(
         }
 
         var dto = await userService.MapToDtoAsync(user, ct);
-        return this.ApiOk(dto, "Profile retrieved successfully");
+        return this.ApiOk(dto, "Profile updated successfully");
     }
 
     [HttpGet("profile")]
@@ -218,6 +227,107 @@ public class AuthController(
     public async Task<IActionResult> GetProfile(CancellationToken ct)
     {
         return await Me(ct);
+    }
+
+    [HttpPost("upload-avatar")]
+    [Authorize]
+    [RequestSizeLimit(10_000_000)] // 10MB limit
+    public async Task<IActionResult> UploadAvatar([FromForm] IFormFile avatar, CancellationToken ct)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+        {
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            return this.ApiUnauthorized(ErrorCodes.USER_NOT_FOUND, "User not found");
+        }
+
+        if (avatar is null || avatar.Length == 0)
+        {
+            return this.ApiBadRequest(ErrorCodes.REQUIRED_FIELD_MISSING, "Avatar file is required");
+        }
+
+        // Validate file type
+        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
+        if (!allowedTypes.Contains(avatar.ContentType.ToLower()))
+        {
+            return this.ApiBadRequest(ErrorCodes.INVALID_VALUE, "Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP");
+        }
+
+        // Validate file size (max 10MB)
+        if (avatar.Length > 10_000_000)
+        {
+            return this.ApiBadRequest(ErrorCodes.INVALID_VALUE, "File size exceeds 10MB limit");
+        }
+
+        try
+        {
+            // Generate unique filename
+            var extension = Path.GetExtension(avatar.FileName);
+            var objectName = $"avatar_{user.Id}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}{extension}";
+
+            // Upload to MinIO
+            string avatarUrl;
+            using (var stream = avatar.OpenReadStream())
+            {
+                avatarUrl = await minioClient.UploadImageAsync(stream, objectName, user.Id, ct);
+            }
+
+            // Update user's avatar URL
+            user.AvatarUrl = avatarUrl;
+            user.UpdatedAt = DateTimeOffset.UtcNow;
+            
+            var result = await userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.Select(e => e.Description).ToList();
+                return this.ApiBadRequest(ErrorCodes.VALIDATION_ERROR, "Avatar update failed", new Dictionary<string, object> { { "errors", errors } });
+            }
+
+            logger.LogInformation("User {UserId} uploaded avatar: {AvatarUrl}", userId, avatarUrl);
+            
+            var userDto = await userService.MapToDtoAsync(user, ct);
+            return this.ApiOk(new { avatarUrl, user = userDto }, "Avatar uploaded successfully");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error uploading avatar for user {UserId}", userId);
+            return this.ApiInternalServerError(ErrorCodes.OPERATION_FAILED, "Failed to upload avatar", new Dictionary<string, object> { { "details", ex.Message } });
+        }
+    }
+
+    [HttpDelete("avatar")]
+    [Authorize]
+    public async Task<IActionResult> DeleteAvatar(CancellationToken ct)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+        {
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            return this.ApiUnauthorized(ErrorCodes.USER_NOT_FOUND, "User not found");
+        }
+
+        user.AvatarUrl = null;
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+        
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors.Select(e => e.Description).ToList();
+            return this.ApiBadRequest(ErrorCodes.VALIDATION_ERROR, "Avatar deletion failed", new Dictionary<string, object> { { "errors", errors } });
+        }
+
+        logger.LogInformation("User {UserId} deleted avatar", userId);
+        return this.ApiOk("Avatar deleted successfully");
     }
 
     [HttpPost("logout")]

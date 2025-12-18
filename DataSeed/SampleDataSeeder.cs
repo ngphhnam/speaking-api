@@ -1,4 +1,5 @@
 using SpeakingPractice.Api.Domain.Entities;
+using SpeakingPractice.Api.Domain.Enums;
 using SpeakingPractice.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -89,7 +90,7 @@ public static class SampleDataSeeder
                 CreatedAt = now,
                 UpdatedAt = now
             },
-            // Part 2 Topics
+            // Part 2 Topics (Part 3 questions will be added to these topics)
             new Topic
             {
                 Id = Guid.Parse("e5f6a7b8-c9d0-4123-e456-789012345678"),
@@ -137,55 +138,6 @@ public static class SampleDataSeeder
                 IsActive = true,
                 CreatedAt = now,
                 UpdatedAt = now
-            },
-            // Part 3 Topics
-            new Topic
-            {
-                Id = Guid.Parse("c9d0e1f2-a3b4-4567-c890-123456789012"),
-                Title = "Education System",
-                Slug = "education-system",
-                Description = "Discussion about education, learning methods, and academic systems",
-                PartNumber = 3,
-                DifficultyLevel = "advanced",
-                TopicCategory = "academic",
-                Keywords = new[] { "education", "learning", "academic", "system" },
-                UsageCount = 35,
-                AvgUserRating = 4.8m,
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now
-            },
-            new Topic
-            {
-                Id = Guid.Parse("d0e1f2a3-b4c5-4678-d901-234567890123"),
-                Title = "Technology Impact",
-                Slug = "technology-impact",
-                Description = "Discussion about technology, its effects on society and daily life",
-                PartNumber = 3,
-                DifficultyLevel = "advanced",
-                TopicCategory = "society",
-                Keywords = new[] { "technology", "digital", "innovation", "impact" },
-                UsageCount = 42,
-                AvgUserRating = 4.7m,
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now
-            },
-            new Topic
-            {
-                Id = Guid.Parse("e1f2a3b4-c5d6-4789-e012-345678901234"),
-                Title = "Environment",
-                Slug = "environment",
-                Description = "Discussion about environmental issues, climate change, and sustainability",
-                PartNumber = 3,
-                DifficultyLevel = "advanced",
-                TopicCategory = "society",
-                Keywords = new[] { "environment", "climate", "pollution", "sustainability" },
-                UsageCount = 39,
-                AvgUserRating = 4.6m,
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now
             }
         };
 
@@ -202,7 +154,8 @@ public static class SampleDataSeeder
                 Id = Guid.Parse("00010001-0000-0000-0000-000000000001"),
                 TopicId = Guid.Parse("a1b2c3d4-e5f6-4789-a012-345678901234"),
                 QuestionText = "Where are you from?",
-                QuestionType = "personal",
+                QuestionType = QuestionType.PART1,
+                QuestionStyle = QuestionStyle.OpenEnded,
                 SuggestedStructure = "Introduction - State your hometown\nDetails - Describe location and size\nPersonal connection - How long you've lived there",
                 KeyVocabulary = new[] { "hometown", "located", "reside", "originally" },
                 EstimatedBandRequirement = 5.0m,
@@ -218,7 +171,8 @@ public static class SampleDataSeeder
                 Id = Guid.Parse("00010001-0000-0000-0000-000000000002"),
                 TopicId = Guid.Parse("a1b2c3d4-e5f6-4789-a012-345678901234"),
                 QuestionText = "What do you like most about your hometown?",
-                QuestionType = "personal",
+                QuestionType = QuestionType.PART1,
+                QuestionStyle = QuestionStyle.OpenEnded,
                 SuggestedStructure = "Introduction - State your favorite aspect\nMain point - Specific feature with example\nConclusion - Why it matters to you",
                 KeyVocabulary = new[] { "appreciate", "favorite", "attraction", "characteristic" },
                 EstimatedBandRequirement = 5.5m,
@@ -234,7 +188,8 @@ public static class SampleDataSeeder
                 Id = Guid.Parse("00010001-0000-0000-0000-000000000003"),
                 TopicId = Guid.Parse("b2c3d4e5-f6a7-4890-b123-456789012345"),
                 QuestionText = "What is your job?",
-                QuestionType = "personal",
+                QuestionType = QuestionType.PART1,
+                QuestionStyle = QuestionStyle.OpenEnded,
                 SuggestedStructure = "Introduction - State your profession\nDetails - Describe your role and responsibilities\nPersonal opinion - How you feel about it",
                 KeyVocabulary = new[] { "profession", "occupation", "role", "responsibilities" },
                 EstimatedBandRequirement = 5.5m,
@@ -251,7 +206,8 @@ public static class SampleDataSeeder
                 Id = Guid.Parse("00020001-0000-0000-0000-000000000001"),
                 TopicId = Guid.Parse("e5f6a7b8-c9d0-4123-e456-789012345678"),
                 QuestionText = "Describe a person who has influenced you. You should say:\n- Who this person is\n- How you know them\n- What they have done to influence you\n- And explain why this person is important to you",
-                QuestionType = "cue_card",
+                QuestionType = QuestionType.PART2,
+                QuestionStyle = QuestionStyle.CueCard,
                 SuggestedStructure = "Introduction - Name the person\nWho they are - Relationship and background\nHow you know them - Context of your relationship\nTheir influence - Specific examples of impact\nWhy important - Personal significance\nConclusion - Summary",
                 KeyVocabulary = new[] { "influence", "inspire", "mentor", "role model", "impact" },
                 EstimatedBandRequirement = 6.5m,
@@ -267,7 +223,8 @@ public static class SampleDataSeeder
                 Id = Guid.Parse("00020001-0000-0000-0000-000000000002"),
                 TopicId = Guid.Parse("f6a7b8c9-d0e1-4234-f567-890123456789"),
                 QuestionText = "Describe a place you would like to visit. You should say:\n- Where it is\n- What you know about it\n- What you would like to do there\n- And explain why you want to visit this place",
-                QuestionType = "cue_card",
+                QuestionType = QuestionType.PART2,
+                QuestionStyle = QuestionStyle.CueCard,
                 SuggestedStructure = "Introduction - Name the place\nLocation - Where it is geographically\nWhat you know - Facts and information\nActivities - What you'd like to do\nWhy visit - Reasons and motivation\nConclusion - Summary",
                 KeyVocabulary = new[] { "destination", "landmark", "attraction", "itinerary", "explore" },
                 EstimatedBandRequirement = 7.0m,
@@ -278,19 +235,21 @@ public static class SampleDataSeeder
                 CreatedAt = now,
                 UpdatedAt = now
             },
-            // Part 3 Questions
+            // Part 3 Questions - Related to Part 2 Topics
+            // Part 3 questions for "Describe a Person" topic
             new Question
             {
                 Id = Guid.Parse("00030001-0000-0000-0000-000000000001"),
-                TopicId = Guid.Parse("c9d0e1f2-a3b4-4567-c890-123456789012"),
-                QuestionText = "What do you think are the main advantages and disadvantages of the education system in your country?",
-                QuestionType = "discussion",
-                SuggestedStructure = "Introduction - State your view\nMain point 1 - Advantage with example\nMain point 2 - Disadvantage with example\nComparison - How it could be improved\nConclusion - Summary",
-                KeyVocabulary = new[] { "advantage", "disadvantage", "curriculum", "pedagogy", "assessment" },
-                EstimatedBandRequirement = 7.5m,
+                TopicId = Guid.Parse("e5f6a7b8-c9d0-4123-e456-789012345678"), // Describe a Person
+                QuestionText = "What qualities make someone a good role model?",
+                QuestionType = QuestionType.PART3,
+                QuestionStyle = QuestionStyle.Opinion,
+                SuggestedStructure = "Introduction - State your view\nMain point 1 - Quality with example\nMain point 2 - Another quality\nConclusion - Summary",
+                KeyVocabulary = new[] { "role model", "qualities", "influence", "inspire", "character" },
+                EstimatedBandRequirement = 7.0m,
                 TimeLimitSeconds = 120,
                 AttemptsCount = 8,
-                AvgScore = 7.8m,
+                AvgScore = 7.5m,
                 IsActive = true,
                 CreatedAt = now,
                 UpdatedAt = now
@@ -298,15 +257,86 @@ public static class SampleDataSeeder
             new Question
             {
                 Id = Guid.Parse("00030001-0000-0000-0000-000000000002"),
-                TopicId = Guid.Parse("d0e1f2a3-b4c5-4678-d901-234567890123"),
-                QuestionText = "How has technology changed the way people communicate?",
-                QuestionType = "discussion",
-                SuggestedStructure = "Introduction - Acknowledge the change\nMain point 1 - Positive changes with examples\nMain point 2 - Negative aspects\nFuture implications - What might happen\nConclusion - Balanced view",
-                KeyVocabulary = new[] { "technology", "communication", "digital", "impact", "transformation" },
-                EstimatedBandRequirement = 8.0m,
+                TopicId = Guid.Parse("e5f6a7b8-c9d0-4123-e456-789012345678"), // Describe a Person
+                QuestionText = "Do you think celebrities have a responsibility to be role models?",
+                QuestionType = QuestionType.PART3,
+                QuestionStyle = QuestionStyle.Opinion,
+                SuggestedStructure = "Introduction - State your position\nMain point 1 - Arguments for\nMain point 2 - Arguments against\nConclusion - Balanced view",
+                KeyVocabulary = new[] { "celebrity", "responsibility", "role model", "influence", "public figure" },
+                EstimatedBandRequirement = 7.5m,
                 TimeLimitSeconds = 120,
                 AttemptsCount = 6,
-                AvgScore = 8.2m,
+                AvgScore = 7.8m,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            // Part 3 questions for "Describe a Place" topic
+            new Question
+            {
+                Id = Guid.Parse("00030001-0000-0000-0000-000000000003"),
+                TopicId = Guid.Parse("f6a7b8c9-d0e1-4234-f567-890123456789"), // Describe a Place
+                QuestionText = "Why do people like to travel?",
+                QuestionType = QuestionType.PART3,
+                QuestionStyle = QuestionStyle.OpenEnded,
+                SuggestedStructure = "Introduction - Acknowledge the question\nMain point 1 - Reason with example\nMain point 2 - Another reason\nConclusion - Summary",
+                KeyVocabulary = new[] { "travel", "tourism", "explore", "discover", "experience" },
+                EstimatedBandRequirement = 6.5m,
+                TimeLimitSeconds = 120,
+                AttemptsCount = 10,
+                AvgScore = 7.0m,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Question
+            {
+                Id = Guid.Parse("00030001-0000-0000-0000-000000000004"),
+                TopicId = Guid.Parse("f6a7b8c9-d0e1-4234-f567-890123456789"), // Describe a Place
+                QuestionText = "What are the advantages and disadvantages of tourism?",
+                QuestionType = QuestionType.PART3,
+                QuestionStyle = QuestionStyle.Comparison,
+                SuggestedStructure = "Introduction - State your view\nMain point 1 - Advantages with examples\nMain point 2 - Disadvantages with examples\nConclusion - Balanced summary",
+                KeyVocabulary = new[] { "tourism", "advantage", "disadvantage", "economy", "culture", "environment" },
+                EstimatedBandRequirement = 7.5m,
+                TimeLimitSeconds = 120,
+                AttemptsCount = 7,
+                AvgScore = 7.8m,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            // Part 3 questions for "Describe an Event" topic
+            new Question
+            {
+                Id = Guid.Parse("00030001-0000-0000-0000-000000000005"),
+                TopicId = Guid.Parse("a7b8c9d0-e1f2-4345-a678-901234567890"), // Describe an Event
+                QuestionText = "What types of events do people celebrate in your country?",
+                QuestionType = QuestionType.PART3,
+                QuestionStyle = QuestionStyle.OpenEnded,
+                SuggestedStructure = "Introduction - Overview\nMain point 1 - Type of event with example\nMain point 2 - Another type\nConclusion - Summary",
+                KeyVocabulary = new[] { "celebrate", "event", "tradition", "festival", "occasion" },
+                EstimatedBandRequirement = 6.5m,
+                TimeLimitSeconds = 120,
+                AttemptsCount = 9,
+                AvgScore = 7.2m,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Question
+            {
+                Id = Guid.Parse("00030001-0000-0000-0000-000000000006"),
+                TopicId = Guid.Parse("a7b8c9d0-e1f2-4345-a678-901234567890"), // Describe an Event
+                QuestionText = "Do you think traditional celebrations are still important?",
+                QuestionType = QuestionType.PART3,
+                QuestionStyle = QuestionStyle.Opinion,
+                SuggestedStructure = "Introduction - State your position\nMain point 1 - Why they're important\nMain point 2 - Challenges they face\nConclusion - Your view",
+                KeyVocabulary = new[] { "traditional", "celebration", "culture", "heritage", "preserve" },
+                EstimatedBandRequirement = 7.0m,
+                TimeLimitSeconds = 120,
+                AttemptsCount = 8,
+                AvgScore = 7.5m,
                 IsActive = true,
                 CreatedAt = now,
                 UpdatedAt = now

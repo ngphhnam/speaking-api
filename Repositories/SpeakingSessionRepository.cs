@@ -11,30 +11,35 @@ public class SpeakingSessionRepository(ApplicationDbContext context) : ISpeaking
 
     public Task<PracticeSession?> GetByIdAsync(Guid id, CancellationToken ct)
         => context.PracticeSessions.AsNoTracking()
+            .Include(ps => ps.Topic)
             .Include(ps => ps.Recordings)
             .ThenInclude(r => r.AnalysisResult)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
     public async Task<IReadOnlyCollection<PracticeSession>> GetByUserAsync(Guid userId, CancellationToken ct)
         => await context.PracticeSessions.AsNoTracking()
+            .Include(s => s.Topic)
             .Where(s => s.UserId == userId)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(ct);
 
     public async Task<IReadOnlyCollection<PracticeSession>> GetActiveByUserAsync(Guid userId, CancellationToken ct)
         => await context.PracticeSessions.AsNoTracking()
+            .Include(s => s.Topic)
             .Where(s => s.UserId == userId && s.Status == "in_progress")
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(ct);
 
     public async Task<IReadOnlyCollection<PracticeSession>> GetCompletedByUserAsync(Guid userId, CancellationToken ct)
         => await context.PracticeSessions.AsNoTracking()
+            .Include(s => s.Topic)
             .Where(s => s.UserId == userId && s.Status == "completed")
             .OrderByDescending(s => s.CompletedAt)
             .ToListAsync(ct);
 
     public async Task<IReadOnlyCollection<PracticeSession>> GetAllAsync(CancellationToken ct)
         => await context.PracticeSessions.AsNoTracking()
+            .Include(s => s.Topic)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(ct);
 

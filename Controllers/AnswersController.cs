@@ -174,7 +174,7 @@ public class AnswersController(
                             corrections = grammarCorrection.Corrections,
                             explanation = grammarCorrection.Explanation
                         }
-                    })
+                    }, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)) // camelCase keys
                     : "{}",
                 AnalyzedAt = DateTimeOffset.UtcNow,
                 CreatedAt = DateTimeOffset.UtcNow

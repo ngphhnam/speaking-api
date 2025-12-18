@@ -1,6 +1,659 @@
-@SpeakingPractice.Api_HostAddress = http://localhost:5260
+@baseUrl = http://localhost:5260
+@accessToken = YOUR_ACCESS_TOKEN_HERE
+@userId = YOUR_USER_ID_HERE
 
-GET {{SpeakingPractice.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+###############################################
+# Authentication & User Management
+###############################################
+
+### Register new user
+POST {{baseUrl}}/api/Auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test@123456",
+  "fullName": "Test User",
+  "role": "Student"
+}
+
+### Login
+POST {{baseUrl}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test@123456"
+}
+
+### Get current user profile
+GET {{baseUrl}}/api/Auth/me
+Authorization: Bearer {{accessToken}}
+
+### Update profile
+PUT {{baseUrl}}/api/Auth/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "fullName": "John Doe Updated",
+  "phone": "+1234567890",
+  "dateOfBirth": "1995-05-15",
+  "targetBandScore": 7.5,
+  "currentLevel": "intermediate",
+  "examDate": "2024-12-31"
+}
+
+### Upload avatar (multipart/form-data - use Postman or similar tool)
+# POST {{baseUrl}}/api/Auth/upload-avatar
+# Authorization: Bearer {{accessToken}}
+# Content-Type: multipart/form-data
+# Body: avatar (file)
+
+### Delete avatar
+DELETE {{baseUrl}}/api/Auth/avatar
+Authorization: Bearer {{accessToken}}
+
+### Change password
+POST {{baseUrl}}/api/Auth/change-password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Test@123456",
+  "newPassword": "NewTest@123456"
+}
+
+### Logout
+POST {{baseUrl}}/api/Auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "your-refresh-token"
+}
+
+###############################################
+# User Settings & Preferences
+###############################################
+
+### Get user settings
+GET {{baseUrl}}/api/user-settings
+Authorization: Bearer {{accessToken}}
+
+### Update user settings
+PUT {{baseUrl}}/api/user-settings
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "targetBandScore": 8.0,
+  "currentLevel": "advanced",
+  "examDate": "2024-12-31"
+}
+
+### Get notification preferences
+GET {{baseUrl}}/api/user-settings/notification-preferences
+Authorization: Bearer {{accessToken}}
+
+### Update notification preferences
+PUT {{baseUrl}}/api/user-settings/notification-preferences
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "emailNotifications": true,
+  "practiceReminders": true,
+  "achievementNotifications": true,
+  "weeklySummary": true,
+  "streakReminders": false
+}
+
+### Get practice preferences
+GET {{baseUrl}}/api/user-settings/practice-preferences
+Authorization: Bearer {{accessToken}}
+
+### Update practice preferences
+PUT {{baseUrl}}/api/user-settings/practice-preferences
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "recordingQuality": "high",
+  "autoSubmit": false,
+  "feedbackDetailLevel": "detailed",
+  "preferredAIModel": "llama",
+  "showHints": true,
+  "enableTimer": true
+}
+
+###############################################
+# Topics
+###############################################
+
+### Get all topics
+GET {{baseUrl}}/api/Topics
+
+### Get topics by part number
+GET {{baseUrl}}/api/Topics?partNumber=1
+
+### Get topics by category
+GET {{baseUrl}}/api/Topics?category=Education
+
+### Get topic by ID
+GET {{baseUrl}}/api/Topics/YOUR_TOPIC_ID_HERE
+
+### Get popular topics
+GET {{baseUrl}}/api/Topics/popular?limit=10
+
+### Get recommended topics
+GET {{baseUrl}}/api/Topics/recommended
+Authorization: Bearer {{accessToken}}
+
+### Upload badge icon (Admin only)
+# POST {{baseUrl}}/api/Achievements/upload-badge-icon
+# Authorization: Bearer {{accessToken}}
+# Content-Type: multipart/form-data
+# Body: badgeIcon (file)
+# Returns: { "badgeIconUrl": "http://minio:9000/avatars/badges/badge_xxx.png" }
+
+### Upload and update achievement badge icon (Admin only)
+# POST {{baseUrl}}/api/Achievements/{achievementId}/upload-badge-icon
+# Authorization: Bearer {{accessToken}}
+# Content-Type: multipart/form-data
+# Body: badgeIcon (file)
+
+### Create new topic
+POST {{baseUrl}}/api/Topics
+Content-Type: application/json
+
+{
+  "title": "Technology and Innovation",
+  "description": "Discuss modern technology and its impact",
+  "partNumber": 2,
+  "difficultyLevel": "intermediate",
+  "topicCategory": "Technology",
+  "keywords": ["technology", "innovation", "future"]
+}
+
+### Get topic vocabulary
+GET {{baseUrl}}/api/Topics/YOUR_TOPIC_ID_HERE/vocabulary
+
+### Get topic statistics
+GET {{baseUrl}}/api/Topics/YOUR_TOPIC_ID_HERE/statistics
+
+### Rate a topic
+POST {{baseUrl}}/api/Topics/YOUR_TOPIC_ID_HERE/rate
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "rating": 4.5
+}
+
+###############################################
+# Questions
+###############################################
+
+### Get all questions
+GET {{baseUrl}}/api/Questions
+
+### Get questions by topic
+GET {{baseUrl}}/api/Questions?topicId=YOUR_TOPIC_ID_HERE
+
+### Get question by ID
+GET {{baseUrl}}/api/Questions/YOUR_QUESTION_ID_HERE
+
+### Get popular questions
+GET {{baseUrl}}/api/Questions/popular?limit=10
+
+### Get random question by topic
+GET {{baseUrl}}/api/Questions/topic/YOUR_TOPIC_ID_HERE/random
+
+### Create new question
+POST {{baseUrl}}/api/Questions
+Content-Type: application/json
+
+{
+  "topicId": "YOUR_TOPIC_ID_HERE",
+  "questionText": "Describe your favorite place to visit",
+  "questionType": "Part 1",
+  "suggestedStructure": "Introduction -> Main points -> Conclusion",
+  "sampleAnswers": [
+    "My favorite place is a small beach town..."
+  ],
+  "keyVocabulary": ["scenic", "peaceful", "relaxing"],
+  "estimatedBandRequirement": 6.0,
+  "timeLimitSeconds": 120
+}
+
+### Get question vocabulary
+GET {{baseUrl}}/api/Questions/YOUR_QUESTION_ID_HERE/vocabulary
+
+### Generate vocabulary for question
+POST {{baseUrl}}/api/Questions/YOUR_QUESTION_ID_HERE/vocabulary/enhance
+Content-Type: application/json
+
+{
+  "bandLevel": 7.0
+}
+
+###############################################
+# Mock Tests
+###############################################
+
+### Start a new mock test
+POST {{baseUrl}}/api/mock-tests/start
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "part1QuestionCount": 3,
+  "part2QuestionCount": 1,
+  "part3QuestionCount": 4
+}
+
+### Get mock test by ID
+GET {{baseUrl}}/api/mock-tests/YOUR_MOCK_TEST_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+### Submit Part 1
+POST {{baseUrl}}/api/mock-tests/YOUR_MOCK_TEST_ID_HERE/submit-part
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "part": 1
+}
+
+### Submit Part 2
+POST {{baseUrl}}/api/mock-tests/YOUR_MOCK_TEST_ID_HERE/submit-part
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "part": 2
+}
+
+### Submit Part 3
+POST {{baseUrl}}/api/mock-tests/YOUR_MOCK_TEST_ID_HERE/submit-part
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "part": 3
+}
+
+### Complete mock test
+POST {{baseUrl}}/api/mock-tests/YOUR_MOCK_TEST_ID_HERE/complete
+Authorization: Bearer {{accessToken}}
+
+### Get user mock test history
+GET {{baseUrl}}/api/mock-tests/user/{{userId}}/history
+Authorization: Bearer {{accessToken}}
+
+### Delete mock test
+DELETE {{baseUrl}}/api/mock-tests/YOUR_MOCK_TEST_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# Speaking Sessions
+###############################################
+
+### Get all sessions for user
+GET {{baseUrl}}/api/session/speaking-session?userId={{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get session by ID
+GET {{baseUrl}}/api/session/speaking-session/YOUR_SESSION_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+### Get user active sessions
+GET {{baseUrl}}/api/session/speaking-session/user/{{userId}}/active
+Authorization: Bearer {{accessToken}}
+
+### Get user completed sessions
+GET {{baseUrl}}/api/session/speaking-session/user/{{userId}}/completed
+Authorization: Bearer {{accessToken}}
+
+### Get session statistics
+GET {{baseUrl}}/api/session/speaking-session/user/{{userId}}/statistics
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# Recordings
+###############################################
+
+### Get all recordings for user
+GET {{baseUrl}}/api/Recordings?userId={{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get recording by ID
+GET {{baseUrl}}/api/Recordings/YOUR_RECORDING_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+### Get recordings by question
+GET {{baseUrl}}/api/Recordings/question/YOUR_QUESTION_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+### Get recordings by session
+GET {{baseUrl}}/api/Recordings/session/YOUR_SESSION_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+### Get recording analysis
+GET {{baseUrl}}/api/Recordings/YOUR_RECORDING_ID_HERE/analysis
+Authorization: Bearer {{accessToken}}
+
+### Refine recording response
+POST {{baseUrl}}/api/Recordings/YOUR_RECORDING_ID_HERE/refine
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "targetBandScore": 7.5,
+  "focusAreas": ["vocabulary", "grammar"]
+}
+
+### Get refinement suggestions
+GET {{baseUrl}}/api/Recordings/YOUR_RECORDING_ID_HERE/refinement-suggestions
+Authorization: Bearer {{accessToken}}
+
+### Compare two versions
+POST {{baseUrl}}/api/Recordings/compare
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "originalText": "I like go to park every day",
+  "refinedText": "I enjoy going to the park every day"
+}
+
+### Delete recording
+DELETE {{baseUrl}}/api/Recordings/YOUR_RECORDING_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# Analysis Results & Feedback
+###############################################
+
+### Get analysis by ID
+GET {{baseUrl}}/api/analysis-results/YOUR_ANALYSIS_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+### Get all analysis results for user
+GET {{baseUrl}}/api/analysis-results/user/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get user statistics
+GET {{baseUrl}}/api/analysis-results/user/{{userId}}/statistics
+Authorization: Bearer {{accessToken}}
+
+### Get analysis trends
+GET {{baseUrl}}/api/analysis-results/user/{{userId}}/trends?days=30
+Authorization: Bearer {{accessToken}}
+
+### Get weak areas
+GET {{baseUrl}}/api/analysis-results/user/{{userId}}/weak-areas
+Authorization: Bearer {{accessToken}}
+
+### Get strengths
+GET {{baseUrl}}/api/analysis-results/user/{{userId}}/strengths
+Authorization: Bearer {{accessToken}}
+
+### Mark feedback as reviewed
+PUT {{baseUrl}}/api/analysis-results/YOUR_ANALYSIS_ID_HERE/mark-reviewed
+Authorization: Bearer {{accessToken}}
+
+### Add note to feedback
+POST {{baseUrl}}/api/analysis-results/YOUR_ANALYSIS_ID_HERE/notes
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "note": "Need to focus more on using complex sentence structures"
+}
+
+### Get feedback by skill
+GET {{baseUrl}}/api/analysis-results/user/{{userId}}/by-skill?skill=grammar
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# User Progress & Statistics
+###############################################
+
+### Get user progress
+GET {{baseUrl}}/api/UserProgress/user/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get daily progress
+GET {{baseUrl}}/api/UserProgress/user/{{userId}}/daily
+Authorization: Bearer {{accessToken}}
+
+### Get weekly progress
+GET {{baseUrl}}/api/UserProgress/user/{{userId}}/weekly
+Authorization: Bearer {{accessToken}}
+
+### Get monthly progress
+GET {{baseUrl}}/api/UserProgress/user/{{userId}}/monthly
+Authorization: Bearer {{accessToken}}
+
+### Get user statistics
+GET {{baseUrl}}/api/UserProgress/user/{{userId}}/statistics
+Authorization: Bearer {{accessToken}}
+
+### Get trends
+GET {{baseUrl}}/api/UserProgress/user/{{userId}}/trends?periodType=daily&periods=30
+Authorization: Bearer {{accessToken}}
+
+### Get improvement data
+GET {{baseUrl}}/api/UserProgress/user/{{userId}}/improvement
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# Vocabulary Management
+###############################################
+
+### Search vocabulary
+GET {{baseUrl}}/api/Vocabulary/search?q=important
+
+### Get all vocabularies
+GET {{baseUrl}}/api/Vocabulary
+
+### Get vocabulary by band level
+GET {{baseUrl}}/api/Vocabulary/band/7.0
+
+### Get vocabulary by topic
+GET {{baseUrl}}/api/Vocabulary/topic/YOUR_TOPIC_ID_HERE
+
+### Get vocabulary by ID
+GET {{baseUrl}}/api/Vocabulary/YOUR_VOCAB_ID_HERE
+
+### Create vocabulary (Admin/Teacher only)
+POST {{baseUrl}}/api/Vocabulary
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "word": "meticulous",
+  "phonetic": "/məˈtɪkjələs/",
+  "partOfSpeech": "adjective",
+  "definitionEn": "Showing great attention to detail; very careful and precise",
+  "definitionVi": "Tỉ mỉ, cẩn thận",
+  "ieltsBandLevel": 7.5,
+  "topicCategories": ["work", "personality"],
+  "exampleSentences": [
+    "She is meticulous in her work.",
+    "The plan was executed with meticulous attention to detail."
+  ],
+  "synonyms": ["careful", "precise", "thorough"],
+  "antonyms": ["careless", "sloppy"],
+  "collocations": ["meticulous attention", "meticulous planning"]
+}
+
+###############################################
+# User Vocabulary (Personal Learning)
+###############################################
+
+### Get user's vocabulary list
+GET {{baseUrl}}/api/UserVocabulary/user/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get learning vocabulary
+GET {{baseUrl}}/api/UserVocabulary/user/{{userId}}/learning
+Authorization: Bearer {{accessToken}}
+
+### Get reviewing vocabulary
+GET {{baseUrl}}/api/UserVocabulary/user/{{userId}}/reviewing
+Authorization: Bearer {{accessToken}}
+
+### Get mastered vocabulary
+GET {{baseUrl}}/api/UserVocabulary/user/{{userId}}/mastered
+Authorization: Bearer {{accessToken}}
+
+### Get vocabulary due for review
+GET {{baseUrl}}/api/UserVocabulary/user/{{userId}}/due-for-review
+Authorization: Bearer {{accessToken}}
+
+### Get vocabulary statistics
+GET {{baseUrl}}/api/UserVocabulary/user/{{userId}}/statistics
+Authorization: Bearer {{accessToken}}
+
+### Add vocabulary to learning list
+POST {{baseUrl}}/api/UserVocabulary
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "vocabularyId": "YOUR_VOCAB_ID_HERE",
+  "personalNotes": "Use this word for describing work habits"
+}
+
+### Update user vocabulary
+PUT {{baseUrl}}/api/UserVocabulary/YOUR_USER_VOCAB_ID_HERE
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "learningStatus": "mastered",
+  "personalNotes": "Fully understood and can use naturally",
+  "exampleUsage": "I am meticulous when preparing for presentations"
+}
+
+### Mark vocabulary as reviewed
+PUT {{baseUrl}}/api/UserVocabulary/YOUR_USER_VOCAB_ID_HERE/review
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+true
+
+### Delete user vocabulary
+DELETE {{baseUrl}}/api/UserVocabulary/YOUR_USER_VOCAB_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# Achievements
+###############################################
+
+### Get all achievements
+GET {{baseUrl}}/api/Achievements
+
+### Get user achievements
+GET {{baseUrl}}/api/UserAchievements/user/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get completed achievements
+GET {{baseUrl}}/api/UserAchievements/user/{{userId}}/completed
+Authorization: Bearer {{accessToken}}
+
+### Get in-progress achievements
+GET {{baseUrl}}/api/UserAchievements/user/{{userId}}/in-progress
+Authorization: Bearer {{accessToken}}
+
+### Get achievement progress
+GET {{baseUrl}}/api/UserAchievements/user/{{userId}}/progress/YOUR_ACHIEVEMENT_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# Leaderboard
+###############################################
+
+### Get top scores (all time)
+GET {{baseUrl}}/api/leaderboard/top-scores?period=all&limit=50
+
+### Get top scores (this week)
+GET {{baseUrl}}/api/leaderboard/top-scores?period=week&limit=50
+
+### Get top scores (this month)
+GET {{baseUrl}}/api/leaderboard/top-scores?period=month&limit=50
+
+### Get top streaks
+GET {{baseUrl}}/api/leaderboard/top-streaks?limit=50
+
+### Get top practice time (this month)
+GET {{baseUrl}}/api/leaderboard/top-practice-time?period=month&limit=50
+
+### Get my rank (by score)
+GET {{baseUrl}}/api/leaderboard/my-rank?category=score&period=all
+Authorization: Bearer {{accessToken}}
+
+### Get my rank (by streak)
+GET {{baseUrl}}/api/leaderboard/my-rank?category=streak&period=all
+Authorization: Bearer {{accessToken}}
+
+### Get my rank (by practice time)
+GET {{baseUrl}}/api/leaderboard/my-rank?category=practice-time&period=month
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# Admin - User Management
+###############################################
+
+### Get all users (Admin only)
+GET {{baseUrl}}/api/admin/users?page=1&pageSize=20
+Authorization: Bearer {{accessToken}}
+
+### Search users (Admin only)
+GET {{baseUrl}}/api/admin/users?search=john&page=1&pageSize=20
+Authorization: Bearer {{accessToken}}
+
+### Filter users by role (Admin only)
+GET {{baseUrl}}/api/admin/users?role=Student&page=1&pageSize=20
+Authorization: Bearer {{accessToken}}
+
+### Get user by ID (Admin only)
+GET {{baseUrl}}/api/admin/users/YOUR_USER_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+### Assign role to user (Admin only)
+POST {{baseUrl}}/api/admin/users/YOUR_USER_ID_HERE/roles
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "role": "Teacher"
+}
+
+### Lock user (Admin only)
+POST {{baseUrl}}/api/admin/users/YOUR_USER_ID_HERE/lock
+Authorization: Bearer {{accessToken}}
+
+### Unlock user (Admin only)
+POST {{baseUrl}}/api/admin/users/YOUR_USER_ID_HERE/unlock
+Authorization: Bearer {{accessToken}}
+
+### Get platform statistics (Admin only)
+GET {{baseUrl}}/api/admin/users/statistics
+Authorization: Bearer {{accessToken}}
+
+### Get analytics (Admin only)
+GET {{baseUrl}}/api/admin/users/analytics
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# Health Check
+###############################################
+
+### Health check
+GET {{baseUrl}}/api/Health
 
 ###

@@ -184,6 +184,75 @@ namespace SpeakingPractice.Api.Migrations
                     b.ToTable("user_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("SpeakingPractice.Api.Controllers.MockTest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal?>("OverallScore")
+                        .HasColumnType("numeric")
+                        .HasColumnName("overall_score");
+
+                    b.Property<DateTimeOffset?>("Part1CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("part1completed_at");
+
+                    b.Property<string>("Part1QuestionIds")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("part1question_ids");
+
+                    b.Property<DateTimeOffset?>("Part2CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("part2completed_at");
+
+                    b.Property<string>("Part2QuestionIds")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("part2question_ids");
+
+                    b.Property<DateTimeOffset?>("Part3CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("part3completed_at");
+
+                    b.Property<string>("Part3QuestionIds")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("part3question_ids");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_mock_tests");
+
+                    b.ToTable("mock_tests", (string)null);
+                });
+
             modelBuilder.Entity("SpeakingPractice.Api.Domain.Entities.Achievement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -439,6 +508,11 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("avatar_url");
 
+                    b.Property<string>("Bio")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("bio");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text")
@@ -453,8 +527,14 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("current_level");
 
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone")
+                    b.Property<int>("CurrentStreak")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("current_streak");
+
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date")
                         .HasColumnName("date_of_birth");
 
                     b.Property<string>("Email")
@@ -472,8 +552,8 @@ namespace SpeakingPractice.Api.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("email_verified");
 
-                    b.Property<DateTime?>("ExamDate")
-                        .HasColumnType("timestamp with time zone")
+                    b.Property<DateOnly?>("ExamDate")
+                        .HasColumnType("date")
                         .HasColumnName("exam_date");
 
                     b.Property<string>("FullName")
@@ -492,6 +572,10 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_login_at");
 
+                    b.Property<DateOnly?>("LastPracticeDate")
+                        .HasColumnType("date")
+                        .HasColumnName("last_practice_date");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("lockout_enabled");
@@ -499,6 +583,12 @@ namespace SpeakingPractice.Api.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_end");
+
+                    b.Property<int>("LongestStreak")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("longest_streak");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -548,6 +638,12 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnType("numeric(2,1)")
                         .HasColumnName("target_band_score");
 
+                    b.Property<int>("TotalPracticeDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("total_practice_days");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("two_factor_enabled");
@@ -563,6 +659,11 @@ namespace SpeakingPractice.Api.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_users");
+
+                    b.HasIndex("CurrentStreak")
+                        .IsDescending()
+                        .HasDatabaseName("idx_users_current_streak")
+                        .HasFilter("\"is_active\" = true AND \"current_streak\" > 0");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -775,14 +876,20 @@ namespace SpeakingPractice.Api.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("key_vocabulary");
 
+                    b.Property<string>("QuestionStyle")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("question_style");
+
                     b.Property<string>("QuestionText")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("question_text");
 
                     b.Property<string>("QuestionType")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
                         .HasColumnName("question_type");
 
                     b.Property<string[]>("SampleAnswers")

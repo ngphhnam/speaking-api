@@ -1,17 +1,20 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.UserProgress;
 using SpeakingPractice.Api.Infrastructure.Extensions;
+using SpeakingPractice.Api.Infrastructure.Persistence;
 using SpeakingPractice.Api.Repositories;
 
 namespace SpeakingPractice.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/[controller]")]
+[Route("api/user-progress")]
 public class UserProgressController(
+    ApplicationDbContext context,
     IUserProgressRepository userProgressRepository,
     IAnalysisResultRepository analysisResultRepository,
     IRecordingRepository recordingRepository,
@@ -155,33 +158,11 @@ public class UserProgressController(
             }
         }
 
-        // Calculate streak (simplified - consecutive days with practice)
-        var dailyProgress = progressList.Where(p => p.PeriodType == "daily" && p.TotalSessions > 0)
-            .OrderByDescending(p => p.PeriodStart)
-            .ToList();
-        
-        int currentStreak = 0;
-        int longestStreak = 0;
-        int tempStreak = 0;
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-
-        for (int i = 0; i < dailyProgress.Count; i++)
-        {
-            var expectedDate = today.AddDays(-i);
-            var progress = dailyProgress.FirstOrDefault(p => p.PeriodStart == expectedDate);
-            
-            if (progress != null && progress.TotalSessions > 0)
-            {
-                if (i == 0) currentStreak++;
-                tempStreak++;
-                longestStreak = Math.Max(longestStreak, tempStreak);
-            }
-            else
-            {
-                if (i > 0) break; // Break if gap found
-                tempStreak = 0;
-            }
-        }
+        // Get streak from user entity (now stored in database - MUCH FASTER!)
+        var user = await context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.CurrentStreak, u.LongestStreak })
+            .FirstOrDefaultAsync(ct);
 
         var statistics = new ProgressStatisticsDto
         {
@@ -192,8 +173,8 @@ public class UserProgressController(
             CurrentAvgScore = currentAvgScore,
             BestScore = bestScore,
             ImprovementPercentage = improvementPercentage,
-            CurrentStreak = currentStreak,
-            LongestStreak = longestStreak
+            CurrentStreak = user?.CurrentStreak ?? 0,
+            LongestStreak = user?.LongestStreak ?? 0
         };
 
         return this.ApiOk(statistics, "Statistics retrieved successfully");

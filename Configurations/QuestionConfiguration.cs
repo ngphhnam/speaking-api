@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SpeakingPractice.Api.Domain.Entities;
+using SpeakingPractice.Api.Domain.Enums;
 
 namespace SpeakingPractice.Api.Configurations;
 
@@ -15,7 +16,20 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
 
         builder.Property(q => q.TopicId).HasColumnName("topic_id");
         builder.Property(q => q.QuestionText).HasColumnName("question_text").IsRequired();
-        builder.Property(q => q.QuestionType).HasColumnName("question_type").HasMaxLength(50);
+        
+        // QuestionType as enum stored as string (PART1, PART2, PART3)
+        builder.Property(q => q.QuestionType)
+            .HasColumnName("question_type")
+            .HasConversion<string>()
+            .HasMaxLength(10)
+            .IsRequired();
+        
+        // QuestionStyle as enum stored as string (nullable)
+        builder.Property(q => q.QuestionStyle)
+            .HasColumnName("question_style")
+            .HasConversion<string>()
+            .HasMaxLength(20);
+        
         builder.Property(q => q.SuggestedStructure).HasColumnName("suggested_structure").HasColumnType("jsonb");
         builder.Property(q => q.SampleAnswers)
             .HasColumnName("sample_answers")

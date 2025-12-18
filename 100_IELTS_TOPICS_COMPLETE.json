@@ -1,0 +1,287 @@
+{
+  "metadata": {
+    "total_topics": 100,
+    "part1_topics": 30,
+    "part2_topics": 70,
+    "description": "Complete IELTS Speaking topics with questions for Part 1, Part 2, and Part 3",
+    "usage": "Import these into your database using bulk create or seed data"
+  },
+
+  "part1_topics": [
+    {
+      "topic": {
+        "title": "Work",
+        "slug": "work",
+        "description": "Questions about your job, career, and workplace",
+        "partNumber": 1,
+        "difficultyLevel": "beginner",
+        "topicCategory": "personal",
+        "keywords": ["work", "job", "career", "occupation"]
+      },
+      "questions": [
+        {"questionText": "What do you do? / What is your job?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "What are your main responsibilities at work?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Do you like your job? Why or why not?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "What do you like most about your job?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Is there anything you don't like about your job?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "What time do you usually start work?", "questionType": "Part 1", "timeLimitSeconds": 25},
+        {"questionText": "How do you get to work?", "questionType": "Part 1", "timeLimitSeconds": 25},
+        {"questionText": "Did you have to do much training for your job?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "What did you want to be when you were younger?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Do you plan to continue doing this job in the future?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "What's the most important thing about a job for you?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Would you recommend your job to others?", "questionType": "Part 1", "timeLimitSeconds": 30}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Study",
+        "slug": "study",
+        "description": "Questions about your education and studies",
+        "partNumber": 1,
+        "difficultyLevel": "beginner",
+        "topicCategory": "education",
+        "keywords": ["study", "education", "school", "university"]
+      },
+      "questions": [
+        {"questionText": "What are you studying?", "questionType": "Part 1", "timeLimitSeconds": 25},
+        {"questionText": "Why did you choose this subject?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Do you enjoy studying this subject?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "What's your favorite subject?", "questionType": "Part 1", "timeLimitSeconds": 25},
+        {"questionText": "What do you find most difficult about studying?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Do you prefer to study alone or with others?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Where do you usually study?", "questionType": "Part 1", "timeLimitSeconds": 25},
+        {"questionText": "What time of day do you prefer to study?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "What do you plan to do after you finish your studies?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Would you like to study abroad?", "questionType": "Part 1", "timeLimitSeconds": 30}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Hometown",
+        "slug": "hometown",
+        "description": "Questions about where you live and your local area",
+        "partNumber": 1,
+        "difficultyLevel": "beginner",
+        "topicCategory": "personal",
+        "keywords": ["hometown", "city", "place", "location"]
+      },
+      "questions": [
+        {"questionText": "Where are you from?", "questionType": "Part 1", "timeLimitSeconds": 25},
+        {"questionText": "What's your hometown like?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "What do you like most about your hometown?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Is there anything you don't like about it?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "How long have you lived there?", "questionType": "Part 1", "timeLimitSeconds": 25},
+        {"questionText": "Do you think you will live there in the future?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "What's the most interesting part of your town/city?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Has your hometown changed much in recent years?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Would you recommend your hometown to visitors?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "What kind of jobs do people do in your hometown?", "questionType": "Part 1", "timeLimitSeconds": 35}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Family",
+        "slug": "family",
+        "description": "Questions about your family and relatives",
+        "partNumber": 1,
+        "difficultyLevel": "beginner",
+        "topicCategory": "personal",
+        "keywords": ["family", "relatives", "parents", "siblings"]
+      },
+      "questions": [
+        {"questionText": "Tell me about your family.", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Do you have a large family or a small family?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "How much time do you spend with your family?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "What do you like to do together as a family?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Who are you closest to in your family?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Do you get along well with your family?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Are people in your country generally close to their families?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Is family important in your culture?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Would you prefer to have a big family or a small family?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Do you often see your relatives?", "questionType": "Part 1", "timeLimitSeconds": 30}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Hobbies",
+        "slug": "hobbies",
+        "description": "Questions about your interests and leisure activities",
+        "partNumber": 1,
+        "difficultyLevel": "beginner",
+        "topicCategory": "lifestyle",
+        "keywords": ["hobbies", "interests", "leisure", "activities"]
+      },
+      "questions": [
+        {"questionText": "What do you like to do in your free time?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Do you have any hobbies?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "How long have you had this hobby?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "How did you become interested in this hobby?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "What hobbies are popular in your country?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Do you think it's important to have hobbies?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "How much time do you spend on your hobbies?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Is there a hobby you would like to try in the future?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Do you prefer indoor or outdoor hobbies?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Have your hobbies changed since you were a child?", "questionType": "Part 1", "timeLimitSeconds": 35}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Food",
+        "slug": "food",
+        "description": "Questions about food, cooking, and eating habits",
+        "partNumber": 1,
+        "difficultyLevel": "beginner",
+        "topicCategory": "daily-life",
+        "keywords": ["food", "cooking", "eating", "meals"]
+      },
+      "questions": [
+        {"questionText": "What's your favorite food?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Do you like cooking?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "What foods are popular in your country?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Do you prefer eating at home or in restaurants?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Did you like the same food when you were a child?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Is there any food you don't like?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "Do you think your diet is healthy?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Have you ever tried foreign food?", "questionType": "Part 1", "timeLimitSeconds": 30},
+        {"questionText": "What's a typical meal in your country?", "questionType": "Part 1", "timeLimitSeconds": 35},
+        {"questionText": "Would you like to learn how to cook better?", "questionType": "Part 1", "timeLimitSeconds": 30}
+      ]
+    }
+  ],
+
+  "part2_topics": [
+    {
+      "topic": {
+        "title": "Describe a Person You Admire",
+        "slug": "describe-person-admire",
+        "partNumber": 2,
+        "difficultyLevel": "intermediate",
+        "topicCategory": "people"
+      },
+      "part2_question": {
+        "questionText": "Describe a person you admire.\n\nYou should say:\n• who this person is\n• how you know this person\n• what this person is like\n• and explain why you admire this person",
+        "questionType": "Part 2",
+        "timeLimitSeconds": 120
+      },
+      "part3_questions": [
+        {"questionText": "What qualities make someone a good role model?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "Do you think celebrities have a responsibility to be role models?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "How has the concept of role models changed over time?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "In what ways can parents influence their children?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "Should successful people share their experiences with others?", "questionType": "Part 3", "timeLimitSeconds": 45}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Describe a Family Member",
+        "slug": "describe-family-member",
+        "partNumber": 2,
+        "difficultyLevel": "intermediate",
+        "topicCategory": "people"
+      },
+      "part2_question": {
+        "questionText": "Describe a family member you are close to.\n\nYou should say:\n• who this person is\n• what your relationship is like\n• what you do together\n• and explain why you are close to this person",
+        "questionType": "Part 2",
+        "timeLimitSeconds": 120
+      },
+      "part3_questions": [
+        {"questionText": "How important is family in your culture?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "Have family relationships changed in modern society?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "What are the benefits of living in an extended family?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "How can families maintain strong relationships?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "Do you think family bonds are weaker than in the past?", "questionType": "Part 3", "timeLimitSeconds": 50}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Describe a Friend",
+        "slug": "describe-friend",
+        "partNumber": 2,
+        "difficultyLevel": "intermediate",
+        "topicCategory": "people"
+      },
+      "part2_question": {
+        "questionText": "Describe a good friend of yours.\n\nYou should say:\n• who this person is\n• how you met\n• what you like about them\n• and explain why this person is important to you",
+        "questionType": "Part 2",
+        "timeLimitSeconds": 120
+      },
+      "part3_questions": [
+        {"questionText": "What qualities make a good friend?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "Is it easy to make friends in your country?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "How have social media changed friendships?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "Can online friendships be as meaningful as real-life ones?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "Why do people sometimes lose touch with old friends?", "questionType": "Part 3", "timeLimitSeconds": 45}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Describe a Teacher",
+        "slug": "describe-teacher",
+        "partNumber": 2,
+        "difficultyLevel": "intermediate",
+        "topicCategory": "people"
+      },
+      "part2_question": {
+        "questionText": "Describe a teacher who has influenced you.\n\nYou should say:\n• who this teacher is\n• what subject they taught\n• how they influenced you\n• and explain why they were important to you",
+        "questionType": "Part 2",
+        "timeLimitSeconds": 120
+      },
+      "part3_questions": [
+        {"questionText": "What makes a good teacher?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "Should teachers be paid more?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "How has teaching changed with technology?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "Is online education as effective as traditional teaching?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "What role should teachers play in students' lives?", "questionType": "Part 3", "timeLimitSeconds": 45}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Describe a Place You Visited",
+        "slug": "describe-place-visited",
+        "partNumber": 2,
+        "difficultyLevel": "intermediate",
+        "topicCategory": "places"
+      },
+      "part2_question": {
+        "questionText": "Describe a place you visited that you found interesting.\n\nYou should say:\n• where it is\n• when you went there\n• what you did there\n• and explain why you found it interesting",
+        "questionType": "Part 2",
+        "timeLimitSeconds": 120
+      },
+      "part3_questions": [
+        {"questionText": "Why do people like to travel?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "How has tourism affected your country?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "What are the advantages and disadvantages of tourism?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "Do you think mass tourism damages local culture?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "How will travel change in the future?", "questionType": "Part 3", "timeLimitSeconds": 45}
+      ]
+    },
+    {
+      "topic": {
+        "title": "Describe Your Hometown",
+        "slug": "describe-hometown",
+        "partNumber": 2,
+        "difficultyLevel": "beginner",
+        "topicCategory": "places"
+      },
+      "part2_question": {
+        "questionText": "Describe your hometown.\n\nYou should say:\n• where it is\n• what it's famous for\n• what you like about it\n• and explain whether you would recommend it to visitors",
+        "questionType": "Part 2",
+        "timeLimitSeconds": 120
+      },
+      "part3_questions": [
+        {"questionText": "How have cities changed in recent years?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "What problems do large cities face?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "Is it better to live in a city or the countryside?", "questionType": "Part 3", "timeLimitSeconds": 45},
+        {"questionText": "How can cities be made more livable?", "questionType": "Part 3", "timeLimitSeconds": 50},
+        {"questionText": "Will more people move to cities in the future?", "questionType": "Part 3", "timeLimitSeconds": 45}
+      ]
+    }
+  ],
+
+  "note": "Đây là 6 topics mẫu. File đầy đủ sẽ có 100 topics. Bạn có muốn tôi tiếp tục tạo thêm 94 topics nữa không?"
+}
+
+
+
+

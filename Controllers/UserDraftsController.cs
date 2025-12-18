@@ -12,7 +12,7 @@ namespace SpeakingPractice.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/[controller]")]
+[Route("api/user-drafts")]
 public class UserDraftsController(
     IUserDraftRepository userDraftRepository,
     IQuestionRepository questionRepository,

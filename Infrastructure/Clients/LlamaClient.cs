@@ -101,7 +101,7 @@ public class LlamaClient(HttpClient httpClient, ILogger<LlamaClient> logger) : I
 
             // Log request payload for debugging
             var payloadJson = JsonSerializer.Serialize(payload, SerializerOptions);
-            logger.LogInformation("Sending grammar correction request to /api/v2/grammar/correct");
+            logger.LogInformation("Sending grammar correction request to /api/grammar/correct");
             logger.LogDebug("Request payload: {Payload}", payloadJson);
             logger.LogDebug("Transcription length: {Length}, Language: {Language}, QuestionText: {QuestionText}", 
                 transcription.Length, language, questionText);

@@ -283,7 +283,7 @@ public class ContentGenerationService(
         return prompt;
     }
 
-    private static string BuildVocabularyPrompt(Domain.Entities.Question question, GenerateVocabularyRequest request)
+private static string BuildVocabularyPrompt(Domain.Entities.Question question, GenerateVocabularyRequest request)
     {
         var prompt = $"Generate key vocabulary for this IELTS question: {question.QuestionText}\n";
         if (request.UserLevel != null)

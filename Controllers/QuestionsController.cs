@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.Domain.Entities;
+using SpeakingPractice.Api.Domain.Enums;
 using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.Drafts;
 using SpeakingPractice.Api.DTOs.Generation;
@@ -24,6 +25,8 @@ public class QuestionsController(
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? topicId,
+        [FromQuery] string? questionType,
+        [FromQuery] int? partNumber,
         [FromQuery] bool includeInactive = false,
         CancellationToken ct = default)
     {
@@ -36,6 +39,35 @@ public class QuestionsController(
         else
         {
             questions = await questionRepository.GetAllAsync(includeInactive, ct);
+        }
+
+        // 1. Nếu client truyền questionType (PART1, PART2, PART3) thì ưu tiên dùng tham số này
+        if (!string.IsNullOrWhiteSpace(questionType))
+        {
+            if (Enum.TryParse<QuestionType>(questionType, ignoreCase: true, out var type))
+            {
+                questions = questions.Where(q => q.QuestionType == type);
+            }
+        }
+        // 2. Nếu không có questionType nhưng có partNumber (1, 2, 3) thì map sang QuestionType
+        else if (partNumber.HasValue)
+        {
+            QuestionType? mappedType = partNumber.Value switch
+            {
+                1 => QuestionType.PART1,
+                2 => QuestionType.PART2,
+                3 => QuestionType.PART3,
+                _ => null
+            };
+
+            if (mappedType is null)
+            {
+                return this.ApiBadRequest(
+                    ErrorCodes.VALIDATION_ERROR,
+                    "Invalid partNumber. Must be 1, 2, or 3");
+            }
+
+            questions = questions.Where(q => q.QuestionType == mappedType.Value);
         }
 
         var dtos = questions.Select(q => MapToDto(q));
@@ -69,13 +101,36 @@ public class QuestionsController(
                 }
             }
 
+            // Parse QuestionType from string to enum
+            if (!Enum.TryParse<QuestionType>(request.QuestionType, ignoreCase: true, out var questionType))
+            {
+                return this.ApiBadRequest(ErrorCodes.VALIDATION_ERROR, 
+                    $"Invalid QuestionType. Must be one of: PART1, PART2, PART3");
+            }
+
+            // Parse QuestionStyle if provided
+            QuestionStyle? questionStyle = null;
+            if (!string.IsNullOrWhiteSpace(request.QuestionStyle))
+            {
+                if (!Enum.TryParse<QuestionStyle>(request.QuestionStyle, ignoreCase: true, out var parsedStyle))
+                {
+                    return this.ApiBadRequest(ErrorCodes.VALIDATION_ERROR, 
+                        $"Invalid QuestionStyle. Must be one of: OpenEnded, YesNo, MultipleChoice, CueCard, Opinion, Comparison, Prediction, CauseEffect");
+                }
+                questionStyle = parsedStyle;
+            }
+
             var question = new Question
             {
                 TopicId = request.TopicId,
                 QuestionText = request.QuestionText,
+                QuestionType = questionType,
+                QuestionStyle = questionStyle,
                 SuggestedStructure = request.SuggestedStructure,
                 SampleAnswers = request.SampleAnswers,
                 KeyVocabulary = request.KeyVocabulary,
+                EstimatedBandRequirement = request.EstimatedBandRequirement,
+                TimeLimitSeconds = request.TimeLimitSeconds,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
@@ -118,7 +173,26 @@ public class QuestionsController(
 
         if (request.TopicId.HasValue) question.TopicId = request.TopicId;
         if (!string.IsNullOrWhiteSpace(request.QuestionText)) question.QuestionText = request.QuestionText;
-        if (request.QuestionType is not null) question.QuestionType = request.QuestionType;
+        if (request.QuestionType is not null)
+        {
+            if (!Enum.TryParse<QuestionType>(request.QuestionType, ignoreCase: true, out var questionType))
+            {
+                return this.ApiBadRequest(ErrorCodes.VALIDATION_ERROR, 
+                    $"Invalid QuestionType. Must be one of: PART1, PART2, PART3");
+            }
+            question.QuestionType = questionType;
+        }
+
+        if (request.QuestionStyle is not null)
+        {
+            if (!Enum.TryParse<QuestionStyle>(request.QuestionStyle, ignoreCase: true, out var questionStyle))
+            {
+                return this.ApiBadRequest(ErrorCodes.VALIDATION_ERROR, 
+                    $"Invalid QuestionStyle. Must be one of: OpenEnded, YesNo, MultipleChoice, CueCard, Opinion, Comparison, Prediction, CauseEffect");
+            }
+            question.QuestionStyle = questionStyle;
+        }
+
         if (request.SuggestedStructure is not null) question.SuggestedStructure = request.SuggestedStructure;
         if (request.SampleAnswers is not null) question.SampleAnswers = request.SampleAnswers;
         if (request.KeyVocabulary is not null) question.KeyVocabulary = request.KeyVocabulary;
@@ -416,7 +490,8 @@ public class QuestionsController(
             TopicId = question.TopicId,
             TopicTitle = question.Topic?.Title,
             QuestionText = question.QuestionText,
-            QuestionType = question.QuestionType,
+            QuestionType = question.QuestionType.ToString(), // Convert enum to string (PART1, PART2, PART3)
+            QuestionStyle = question.QuestionStyle?.ToString(), // Convert enum to string or null
             SuggestedStructure = question.SuggestedStructure,
             SampleAnswers = question.SampleAnswers,
             KeyVocabulary = question.KeyVocabulary,

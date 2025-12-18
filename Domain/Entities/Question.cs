@@ -1,3 +1,5 @@
+using SpeakingPractice.Api.Domain.Enums;
+
 namespace SpeakingPractice.Api.Domain.Entities;
 
 public class Question
@@ -5,7 +7,8 @@ public class Question
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid? TopicId { get; set; }
     public string QuestionText { get; set; } = string.Empty;
-    public string? QuestionType { get; set; }
+    public QuestionType QuestionType { get; set; } = QuestionType.PART1;
+    public QuestionStyle? QuestionStyle { get; set; }
     public string? SuggestedStructure { get; set; } // JSONB
     public string[]? SampleAnswers { get; set; } // JSONB[]
     public string[]? KeyVocabulary { get; set; } // JSONB[]

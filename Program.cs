@@ -230,6 +230,7 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IContentGenerationService, ContentGenerationService>();
 builder.Services.AddScoped<IRefinementService, RefinementService>();
 builder.Services.AddScoped<IDraftService, DraftService>();
+builder.Services.AddScoped<IStreakService, StreakService>();
 
 var app = builder.Build();
 
@@ -245,5 +246,13 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Seed IELTS topics if --seed argument is provided
+if (args.Contains("--seed"))
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await SpeakingPractice.Api.DataSeed.IELTSTopicsSeeder.SeedAsync(context);
+}
 
 app.Run();

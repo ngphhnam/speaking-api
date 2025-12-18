@@ -275,3 +275,7 @@ G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\obj\Debug\net8.0\refint\SpeakingP
 G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\obj\Debug\net8.0\SpeakingPractice.Api.pdb
 G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\obj\Debug\net8.0\SpeakingPractice.Api.genruntimeconfig.cache
 G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\obj\Debug\net8.0\ref\SpeakingPractice.Api.dll
+G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\SpeakingPractice_API.postman_collection.json
+G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\IELTS_TOPICS_JSON_EXAMPLES.json
+G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\100_IELTS_TOPICS_COMPLETE.json
+G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\PART2_PART3_REQUEST_BODIES.json

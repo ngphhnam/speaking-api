@@ -1,0 +1,192 @@
+{
+  "part1_topics": [
+    {
+      "title": "Work",
+      "slug": "work",
+      "description": "Questions about your job, career, and workplace",
+      "partNumber": 1,
+      "difficultyLevel": "beginner",
+      "topicCategory": "personal",
+      "keywords": ["work", "job", "career", "occupation", "workplace"]
+    },
+    {
+      "title": "Hobbies",
+      "slug": "hobbies",
+      "description": "Questions about your interests and leisure activities",
+      "partNumber": 1,
+      "difficultyLevel": "beginner",
+      "topicCategory": "lifestyle",
+      "keywords": ["hobbies", "interests", "leisure", "free time", "activities"]
+    },
+    {
+      "title": "Hometown",
+      "slug": "hometown",
+      "description": "Questions about where you live and your local area",
+      "partNumber": 1,
+      "difficultyLevel": "beginner",
+      "topicCategory": "personal",
+      "keywords": ["hometown", "city", "place", "location", "area"]
+    }
+  ],
+  
+  "part1_questions_work": [
+    {
+      "questionText": "What do you do? / What is your job?",
+      "questionType": "Part 1",
+      "timeLimitSeconds": 30,
+      "suggestedStructure": "{\"opening\":\"I'm a...\",\"detail\":\"I work at...\",\"extra\":\"I've been doing this for...\"}",
+      "sampleAnswers": [
+        "I'm a software developer. I work at a tech company in Ho Chi Minh City. I've been doing this for about 3 years now.",
+        "I'm currently a university student studying Business Administration at the National University."
+      ],
+      "keyVocabulary": ["occupation", "profession", "career", "industry", "responsibilities"],
+      "estimatedBandRequirement": 5.0
+    },
+    {
+      "questionText": "What are your main responsibilities at work?",
+      "questionType": "Part 1",
+      "timeLimitSeconds": 30,
+      "sampleAnswers": [
+        "My main responsibilities include developing software applications, fixing bugs, and working with the team to deliver projects on time."
+      ],
+      "keyVocabulary": ["responsibilities", "duties", "tasks", "role"],
+      "estimatedBandRequirement": 5.5
+    },
+    {
+      "questionText": "Do you like your job? Why or why not?",
+      "questionType": "Part 1",
+      "timeLimitSeconds": 35,
+      "sampleAnswers": [
+        "Yes, I really enjoy my job. It's challenging and allows me to be creative. Plus, I work with a great team and learn new things every day."
+      ],
+      "keyVocabulary": ["enjoy", "challenging", "rewarding", "satisfying"],
+      "estimatedBandRequirement": 5.5
+    }
+  ],
+
+  "part2_topics": [
+    {
+      "title": "Describe a Person You Admire",
+      "slug": "describe-person-admire",
+      "description": "Describe a person who has influenced you or someone you admire",
+      "partNumber": 2,
+      "difficultyLevel": "intermediate",
+      "topicCategory": "people",
+      "keywords": ["person", "admire", "influence", "role model", "inspiration"]
+    },
+    {
+      "title": "Describe a Place You Visited",
+      "slug": "describe-place-visited",
+      "description": "Describe a memorable place you have visited",
+      "partNumber": 2,
+      "difficultyLevel": "intermediate",
+      "topicCategory": "places",
+      "keywords": ["place", "visit", "travel", "location", "destination"]
+    },
+    {
+      "title": "Describe a Memorable Event",
+      "slug": "describe-memorable-event",
+      "description": "Describe an event or occasion that was memorable",
+      "partNumber": 2,
+      "difficultyLevel": "intermediate",
+      "topicCategory": "events",
+      "keywords": ["event", "occasion", "memorable", "experience", "celebration"]
+    }
+  ],
+
+  "part2_question_person": {
+    "questionText": "Describe a person you admire.\n\nYou should say:\n• who this person is\n• how you know this person\n• what this person is like\n• and explain why you admire this person",
+    "questionType": "Part 2",
+    "timeLimitSeconds": 120,
+    "suggestedStructure": "{\"intro\":\"I'd like to talk about...\",\"point1\":\"First, regarding who this person is...\",\"point2\":\"I first met/knew this person...\",\"point3\":\"As for what they're like...\",\"conclusion\":\"The reason I admire them is...\"}",
+    "sampleAnswers": [
+      "I'd like to talk about my high school English teacher, Ms. Nguyen. I first met her when I was 15, and she taught me for three years. She's an incredibly patient and dedicated teacher who always goes the extra mile to help her students. What I admire most about her is her passion for teaching and her ability to inspire students. She never gave up on anyone, no matter how difficult they found the subject. She believed in every student's potential and worked hard to help them succeed. Thanks to her, I developed a love for English and decided to pursue it further. She's not just a teacher but a true role model who has shaped who I am today."
+    ],
+    "keyVocabulary": [
+      "admire",
+      "role model",
+      "inspiring",
+      "influential",
+      "dedicated",
+      "passionate",
+      "impact",
+      "motivated",
+      "look up to",
+      "shaped my life"
+    ],
+    "estimatedBandRequirement": 6.0
+  },
+
+  "part2_question_place": {
+    "questionText": "Describe a place you visited that you found interesting.\n\nYou should say:\n• where it is\n• when you went there\n• what you did there\n• and explain why you found it interesting",
+    "questionType": "Part 2",
+    "timeLimitSeconds": 120,
+    "suggestedStructure": "{\"intro\":\"I'd like to describe...\",\"location\":\"It's located...\",\"visit\":\"I visited there...\",\"activities\":\"During my visit, I...\",\"reason\":\"What made it interesting was...\"}",
+    "sampleAnswers": [
+      "I'd like to describe the ancient town of Hoi An, which is located in central Vietnam. I visited there last summer with my family for a 3-day trip. During our visit, we explored the old streets with their beautiful yellow buildings, visited traditional craft workshops, and enjoyed the lantern festival at night. What made it so interesting was the perfect blend of history and culture. The town has preserved its traditional architecture wonderfully, and you can really feel the atmosphere of old Vietnam. The food was amazing too, and the local people were incredibly friendly. It was a peaceful yet vibrant place that gave me a deeper appreciation for Vietnamese heritage."
+    ],
+    "keyVocabulary": [
+      "ancient",
+      "historic",
+      "traditional",
+      "architecture",
+      "heritage",
+      "atmosphere",
+      "preserved",
+      "cultural",
+      "fascinating"
+    ],
+    "estimatedBandRequirement": 6.0
+  },
+
+  "part3_questions_person_topic": [
+    {
+      "questionText": "What qualities make someone a good role model in your country?",
+      "questionType": "Part 3",
+      "timeLimitSeconds": 45,
+      "suggestedStructure": "{\"direct\":\"I think several qualities are important...\",\"expand\":\"For example...\",\"reason\":\"This is because...\"}",
+      "sampleAnswers": [
+        "I think several qualities make someone a good role model in Vietnam. Firstly, integrity is crucial - they should practice what they preach and be honest in their dealings. Secondly, they need to be hardworking and show dedication to their work or cause. Vietnamese people especially respect those who have overcome difficulties through perseverance and stayed humble despite their success. Additionally, being family-oriented and respecting traditional values is highly valued. Finally, contributing to society, whether through charity work or helping others, is seen as a mark of a true role model."
+      ],
+      "keyVocabulary": ["qualities", "role model", "integrity", "dedication", "perseverance", "humble", "contribute"],
+      "estimatedBandRequirement": 6.5
+    },
+    {
+      "questionText": "Do you think celebrities have a responsibility to be good role models?",
+      "questionType": "Part 3",
+      "timeLimitSeconds": 45,
+      "sampleAnswers": [
+        "Yes, I believe celebrities do have a responsibility to be good role models, especially if they have young fans. They have chosen to be in the public eye and enjoy the benefits of fame, so they should accept the responsibilities that come with it. Their actions and words can significantly influence people, particularly young and impressionable fans. However, I also think we shouldn't put unrealistic expectations on them - they're human and will make mistakes. The key is how they handle their mistakes and whether they generally try to have a positive influence."
+      ],
+      "keyVocabulary": ["celebrities", "responsibility", "influence", "public eye", "role models", "impact"],
+      "estimatedBandRequirement": 7.0
+    },
+    {
+      "questionText": "How has the concept of a role model changed over the years?",
+      "questionType": "Part 3",
+      "timeLimitSeconds": 50,
+      "sampleAnswers": [
+        "The concept of role models has changed quite dramatically over the years. In the past, role models were typically historical figures, political leaders, or local community members like teachers and doctors. Today, with the rise of social media and entertainment industry, many young people look up to celebrities, influencers, and YouTube stars. The criteria have also shifted - it's now often about success, wealth, and fame rather than moral character or contribution to society. Additionally, role models have become more accessible through social media, but this also means their flaws and mistakes are more visible. I think this change reflects broader societal shifts in values and how we communicate."
+      ],
+      "keyVocabulary": ["evolved", "dramatically", "social media", "influencers", "criteria", "values", "accessible"],
+      "estimatedBandRequirement": 7.5
+    },
+    {
+      "questionText": "In what ways can parents influence their children to become better people?",
+      "questionType": "Part 3",
+      "timeLimitSeconds": 50,
+      "sampleAnswers": [
+        "Parents can influence their children in numerous ways. Most importantly, they should lead by example - children learn more from what parents do than what they say. Showing values like honesty, kindness, and hard work in daily life teaches children these principles naturally. Parents should also provide guidance while allowing children to make their own decisions and learn from mistakes. Creating a supportive environment where children feel safe to express themselves is crucial. Additionally, encouraging education, teaching respect for others, and exposing children to diverse experiences can broaden their perspectives. Finally, spending quality time together and having open conversations helps build strong relationships and trust."
+      ],
+      "keyVocabulary": ["influence", "lead by example", "values", "guidance", "supportive", "perspectives"],
+      "estimatedBandRequirement": 7.0
+    }
+  ],
+
+  "mock_test_start_request": {
+    "part1QuestionCount": 12,
+    "part2QuestionCount": 1,
+    "part3QuestionCount": 4
+  }
+}
+
