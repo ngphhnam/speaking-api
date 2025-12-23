@@ -32,6 +32,7 @@ public class ApplicationDbContext(
     // System tables
     public DbSet<ApiUsageLog> ApiUsageLogs => Set<ApiUsageLog>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Payment> Payments => Set<Payment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

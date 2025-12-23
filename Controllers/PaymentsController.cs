@@ -49,7 +49,15 @@ public class PaymentsController(
             rawBody = await reader.ReadToEndAsync();
         }
 
-        var signature = Request.Headers["x-signature"].ToString();
+        // Lấy signature từ các header phổ biến mà PayOS có thể gửi
+        var signature =
+            Request.Headers["x-signature"].ToString()
+            ?? Request.Headers["x-payos-signature"].ToString()
+            ?? Request.Headers["x-webhook-signature"].ToString();
+
+        // Logging để debug webhook từ PayOS
+        logger.LogInformation("Received PayOS webhook. Signature header: {Signature}", signature);
+        logger.LogInformation("PayOS webhook raw body: {Body}", rawBody);
 
         var userId = await paymentService.HandlePayOsWebhookAsync(rawBody, signature, ct);
         if (userId is null)
@@ -61,6 +69,28 @@ public class PaymentsController(
 
         logger.LogInformation("Processed PayOS webhook and upgraded user {UserId}", userId.Value);
         return Ok();
+    }
+
+    /// <summary>
+    /// FE can poll this endpoint with orderCode or paymentLinkId to know current payment status.
+    /// </summary>
+    [HttpGet("status/{code}")]
+    [Authorize]
+    public async Task<IActionResult> GetPaymentStatus([FromRoute] string code, CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not authenticated");
+        }
+
+        var status = await paymentService.GetPaymentStatusAsync(userId, code, ct);
+        if (status is null)
+        {
+            return this.ApiNotFound("Payment not found");
+        }
+
+        return this.ApiOk(status);
     }
 }
 

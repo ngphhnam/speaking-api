@@ -14,6 +14,11 @@ public interface IPaymentService
     /// Returns the associated user id if a subscription was updated, otherwise null.
     /// </summary>
     Task<Guid?> HandlePayOsWebhookAsync(string rawBody, string signature, CancellationToken ct);
+
+    /// <summary>
+    /// Get payment status for the current user by orderCode or paymentLinkId.
+    /// </summary>
+    Task<PaymentStatusResponse?> GetPaymentStatusAsync(Guid userId, string orderCodeOrPaymentLinkId, CancellationToken ct);
 }
 
 
