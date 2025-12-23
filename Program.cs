@@ -73,6 +73,7 @@ builder.Services.Configure<MinioOptions>(builder.Configuration.GetSection(MinioO
 builder.Services.Configure<WhisperOptions>(builder.Configuration.GetSection(WhisperOptions.SectionName));
 builder.Services.Configure<LlamaOptions>(builder.Configuration.GetSection(LlamaOptions.SectionName));
 builder.Services.Configure<LanguageToolOptions>(builder.Configuration.GetSection(LanguageToolOptions.SectionName));
+builder.Services.Configure<PayOsOptions>(builder.Configuration.GetSection(PayOsOptions.SectionName));
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
                  ?? throw new InvalidOperationException("Jwt configuration missing");
@@ -147,6 +148,30 @@ builder.Services.AddHttpClient<ILanguageToolClient, LanguageToolClient>((sp, cli
 {
     var options = sp.GetRequiredService<IOptions<LanguageToolOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl);
+});
+
+builder.Services.AddHttpClient("PayOS", (sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<PayOsOptions>>().Value;
+    if (string.IsNullOrWhiteSpace(options.BaseUrl))
+    {
+        throw new InvalidOperationException("PayOS BaseUrl is not configured");
+    }
+
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+    // Auth headers giống như bạn đang dùng trong Postman
+    if (!string.IsNullOrWhiteSpace(options.ClientId))
+    {
+        client.DefaultRequestHeaders.Add("x-client-id", options.ClientId);
+    }
+
+    if (!string.IsNullOrWhiteSpace(options.ApiKey))
+    {
+        client.DefaultRequestHeaders.Add("x-api-key", options.ApiKey);
+    }
 });
 
 builder.Services.AddSingleton(sp =>
@@ -231,6 +256,7 @@ builder.Services.AddScoped<IContentGenerationService, ContentGenerationService>(
 builder.Services.AddScoped<IRefinementService, RefinementService>();
 builder.Services.AddScoped<IDraftService, DraftService>();
 builder.Services.AddScoped<IStreakService, StreakService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 var app = builder.Build();
 

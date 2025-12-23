@@ -279,3 +279,5 @@ G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\SpeakingPractice
 G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\IELTS_TOPICS_JSON_EXAMPLES.json
 G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\100_IELTS_TOPICS_COMPLETE.json
 G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\PART2_PART3_REQUEST_BODIES.json
+G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\Newtonsoft.Json.dll
+G:\FINAL_PROJECT\SPEAKING\SpeakingPractice.Api\bin\Debug\net8.0\payos-lib-backend-dotnet.dll

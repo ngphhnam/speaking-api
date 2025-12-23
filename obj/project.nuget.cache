@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "XG+41Uc3IsI=",
+  "dgSpecHash": "eTLnjvhQR5Q=",
   "success": true,
   "projectFilePath": "G:\\FINAL_PROJECT\\SPEAKING\\SpeakingPractice.Api\\SpeakingPractice.Api.csproj",
   "expectedPackageFiles": [
@@ -48,8 +48,10 @@
     "C:\\Users\\nam\\.nuget\\packages\\microsoft.openapi\\1.6.14\\microsoft.openapi.1.6.14.nupkg.sha512",
     "C:\\Users\\nam\\.nuget\\packages\\minio\\5.0.2\\minio.5.0.2.nupkg.sha512",
     "C:\\Users\\nam\\.nuget\\packages\\mono.texttemplating\\2.2.1\\mono.texttemplating.2.2.1.nupkg.sha512",
+    "C:\\Users\\nam\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\nam\\.nuget\\packages\\npgsql\\8.0.6\\npgsql.8.0.6.nupkg.sha512",
     "C:\\Users\\nam\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\8.0.11\\npgsql.entityframeworkcore.postgresql.8.0.11.nupkg.sha512",
+    "C:\\Users\\nam\\.nuget\\packages\\payos\\1.0.5\\payos.1.0.5.nupkg.sha512",
     "C:\\Users\\nam\\.nuget\\packages\\polly\\8.4.1\\polly.8.4.1.nupkg.sha512",
     "C:\\Users\\nam\\.nuget\\packages\\polly.core\\8.4.1\\polly.core.8.4.1.nupkg.sha512",
     "C:\\Users\\nam\\.nuget\\packages\\polly.extensions.http\\3.0.0\\polly.extensions.http.3.0.0.nupkg.sha512",

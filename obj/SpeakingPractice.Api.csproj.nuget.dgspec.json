@@ -103,6 +103,10 @@
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.6.2, )"
+            },
+            "payOS": {
+              "target": "Package",
+              "version": "[1.0.5, )"
             }
           },
           "imports": [
