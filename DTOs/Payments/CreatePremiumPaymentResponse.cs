@@ -31,6 +31,26 @@ public class CreatePremiumPaymentResponse
     /// Pre-built QR image URL (VietQR) if bin/accountNumber/accountName are present.
     /// </summary>
     public string? QrImageUrl { get; set; }
+
+    /// <summary>
+    /// Expiration time (UTC) of the PayOS payment link.
+    /// </summary>
+    public DateTimeOffset ExpiredAt { get; set; }
+
+    /// <summary>
+    /// Bank account name returned by PayOS (if available).
+    /// </summary>
+    public string? BankAccountName { get; set; }
+
+    /// <summary>
+    /// Bank account number returned by PayOS (if available).
+    /// </summary>
+    public string? BankAccountNumber { get; set; }
+
+    /// <summary>
+    /// Description sent to PayOS (for display on FE).
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
 }
 
 

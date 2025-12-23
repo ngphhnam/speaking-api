@@ -2,6 +2,7 @@ using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -26,6 +27,7 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
+builder.Services.AddSignalR();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -108,10 +110,20 @@ builder.Services.AddAuthentication(options =>
         {
             OnMessageReceived = context =>
             {
-                if (string.IsNullOrEmpty(context.Token) &&
-                    context.Request.Cookies.TryGetValue("accessToken", out var token))
+                // Allow SignalR to send token via query string (access_token) and fallback to cookie
+                if (string.IsNullOrEmpty(context.Token))
                 {
-                    context.Token = token;
+                    var accessToken = context.Request.Query["access_token"];
+                    var path = context.HttpContext.Request.Path;
+
+                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/payments"))
+                    {
+                        context.Token = accessToken;
+                    }
+                    else if (context.Request.Cookies.TryGetValue("accessToken", out var cookieToken))
+                    {
+                        context.Token = cookieToken;
+                    }
                 }
 
                 return Task.CompletedTask;
@@ -272,6 +284,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<SpeakingPractice.Api.Hubs.PaymentHub>("/hubs/payments");
 
 // Seed IELTS topics if --seed argument is provided
 if (args.Contains("--seed"))

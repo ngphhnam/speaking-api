@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using SpeakingPractice.Api.Domain.Entities;
 using SpeakingPractice.Api.DTOs.Payments;
@@ -16,13 +17,15 @@ public class PaymentService(
     IOptions<PayOsOptions> payOsOptions,
     UserManager<ApplicationUser> userManager,
     ApplicationDbContext dbContext,
-    ILogger<PaymentService> logger) : IPaymentService
+    ILogger<PaymentService> logger,
+    Microsoft.AspNetCore.SignalR.IHubContext<SpeakingPractice.Api.Hubs.PaymentHub> hubContext) : IPaymentService
 {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly PayOsOptions _options = payOsOptions.Value;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly ILogger<PaymentService> _logger = logger;
     private readonly ApplicationDbContext _dbContext = dbContext;
+    private readonly Microsoft.AspNetCore.SignalR.IHubContext<SpeakingPractice.Api.Hubs.PaymentHub> _hubContext = hubContext;
 
     public async Task<CreatePremiumPaymentResponse> CreatePremiumPaymentAsync(
         Guid userId,
@@ -38,7 +41,7 @@ public class PaymentService(
         var amount = request.Amount ?? 10000; // example: 100,000 VND
 
         // PayOS giới hạn description tối đa 25 ký tự
-        var description = "Premium Upgrade";
+        var description = GenerateDescription();
         var nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var expiredAt = nowUnix + 3600; // 1 hour
 
@@ -210,7 +213,11 @@ public class PaymentService(
             PaymentId = paymentId,
             PaymentLinkId = paymentLinkId,
             QrCode = qrCode,
-            QrImageUrl = qrImageUrl
+            QrImageUrl = qrImageUrl,
+            ExpiredAt = DateTimeOffset.FromUnixTimeSeconds(expiredAt),
+            BankAccountName = dataElement.TryGetProperty("accountName", out var accNameProp) ? accNameProp.GetString() : null,
+            BankAccountNumber = dataElement.TryGetProperty("accountNumber", out var accNumProp) ? accNumProp.GetString() : null,
+            Description = description
         };
     }
 
@@ -314,6 +321,7 @@ public class PaymentService(
         payment.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _dbContext.SaveChangesAsync(ct);
+        await BroadcastPaymentStatusAsync(payment.UserId, payment, ct);
 
         if (!isSuccess)
         {
@@ -367,21 +375,7 @@ public class PaymentService(
             return null;
         }
 
-        return new PaymentStatusResponse
-        {
-            OrderCode = payment.OrderCode,
-            PaymentLinkId = payment.PaymentLinkId,
-            Status = payment.Status,
-            Amount = payment.Amount,
-            Currency = payment.Currency,
-            Provider = payment.Provider,
-            CheckoutUrl = payment.CheckoutUrl,
-            QrCode = payment.QrCode,
-            QrImageUrl = payment.QrImageUrl,
-            PaidAt = payment.PaidAt,
-            CreatedAt = payment.CreatedAt,
-            UpdatedAt = payment.UpdatedAt
-        };
+        return ToStatusResponse(payment);
     }
 
     private static string ComputePayOsSignature(System.Text.Json.JsonElement dataElement, string checksumKey)
@@ -411,6 +405,39 @@ public class PaymentService(
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(checksumKey));
         var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(message));
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
+    }
+
+    private static PaymentStatusResponse ToStatusResponse(Payment payment) => new()
+    {
+        OrderCode = payment.OrderCode,
+        PaymentLinkId = payment.PaymentLinkId,
+        Status = payment.Status,
+        Amount = payment.Amount,
+        Currency = payment.Currency,
+        Provider = payment.Provider,
+        CheckoutUrl = payment.CheckoutUrl,
+        QrCode = payment.QrCode,
+        QrImageUrl = payment.QrImageUrl,
+        PaidAt = payment.PaidAt,
+        CreatedAt = payment.CreatedAt,
+        UpdatedAt = payment.UpdatedAt
+    };
+
+    private static string GenerateDescription()
+    {
+        // Random-ish suffix to avoid identical descriptions while staying under 25 chars
+        var rnd = Random.Shared.Next(1000, 9999);
+        return $"Nâng cấp premium #{rnd}".Substring(0, Math.Min(25, $"Nâng cấp premium #{rnd}".Length));
+    }
+
+    private Task BroadcastPaymentStatusAsync(Guid userId, Payment payment, CancellationToken ct)
+    {
+        var payload = ToStatusResponse(payment);
+        // Broadcast to user-specific group and user channel for flexibility
+        return Task.WhenAll(
+            _hubContext.Clients.User(userId.ToString()).SendAsync("paymentUpdated", payload, ct),
+            _hubContext.Clients.Group(userId.ToString()).SendAsync("paymentUpdated", payload, ct)
+        );
     }
 }
 

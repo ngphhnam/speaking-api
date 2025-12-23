@@ -39,7 +39,12 @@ public class UserManagementService(
         {
             var roles = await userManager.GetRolesAsync(user);
             var primaryRole = roles.FirstOrDefault() ?? string.Empty;
-            items.Add(new UserDto(user.Id, user.Email ?? string.Empty, user.FullName, primaryRole));
+            items.Add(new UserDto(
+                user.Id,
+                user.Email ?? string.Empty,
+                user.FullName,
+                primaryRole,
+                user.SubscriptionType));
         }
 
         return new PagedResult<UserDto>(items, page, pageSize, total);

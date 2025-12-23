@@ -26,7 +26,8 @@ public class UserService(UserManager<ApplicationUser> userManager) : IUserServic
             user.CurrentStreak,
             user.LongestStreak,
             user.LastPracticeDate,
-            user.TotalPracticeDays
+            user.TotalPracticeDays,
+            user.SubscriptionType
         );
     }
 }
