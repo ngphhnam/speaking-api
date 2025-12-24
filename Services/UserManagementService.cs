@@ -40,11 +40,25 @@ public class UserManagementService(
             var roles = await userManager.GetRolesAsync(user);
             var primaryRole = roles.FirstOrDefault() ?? string.Empty;
             items.Add(new UserDto(
-                user.Id,
-                user.Email ?? string.Empty,
-                user.FullName,
-                primaryRole,
-                user.SubscriptionType));
+                Id: user.Id,
+                Email: user.Email ?? string.Empty,
+                FullName: user.FullName,
+                Role: primaryRole,
+                Bio: user.Bio,
+                AvatarUrl: user.AvatarUrl,
+                Phone: user.Phone,
+                DateOfBirth: user.DateOfBirth,
+                TargetBandScore: user.TargetBandScore,
+                CurrentLevel: user.CurrentLevel,
+                ExamDate: user.ExamDate,
+                CurrentStreak: user.CurrentStreak,
+                LongestStreak: user.LongestStreak,
+                LastPracticeDate: user.LastPracticeDate,
+                TotalPracticeDays: user.TotalPracticeDays,
+                SubscriptionType: user.SubscriptionType,
+                SubscriptionExpiresAt: user.SubscriptionExpiresAt,
+                SubscriptionPlanCode: user.SubscriptionPlanCode,
+                SubscriptionPlanDays: user.SubscriptionPlanDays));
         }
 
         return new PagedResult<UserDto>(items, page, pageSize, total);

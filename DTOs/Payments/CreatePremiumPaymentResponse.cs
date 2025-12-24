@@ -51,6 +51,21 @@ public class CreatePremiumPaymentResponse
     /// Description sent to PayOS (for display on FE).
     /// </summary>
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Plan code used to create this payment (premium_1m/premium_3m/premium_6m/premium_12m).
+    /// </summary>
+    public string PlanCode { get; set; } = "premium_1m";
+
+    /// <summary>
+    /// Plan duration in days.
+    /// </summary>
+    public int PlanDays { get; set; } = 30;
+
+    /// <summary>
+    /// Plan price (amount) in smallest currency unit (e.g., VND).
+    /// </summary>
+    public long PlanPrice { get; set; }
 }
 
 

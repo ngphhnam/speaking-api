@@ -11,6 +11,11 @@ public class CreatePremiumPaymentRequest
     /// Optional amount override. If not provided, backend can use a default premium price.
     /// </summary>
     public long? Amount { get; set; }
+
+    /// <summary>
+    /// Premium plan code: premium_1m, premium_3m, premium_6m, premium_12m. Defaults to premium_1m.
+    /// </summary>
+    public string? PlanCode { get; set; }
 }
 
 

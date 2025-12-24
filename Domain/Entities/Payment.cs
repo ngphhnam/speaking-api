@@ -22,6 +22,9 @@ public class Payment
     public string? CheckoutUrl { get; set; }
     public string? QrCode { get; set; }
     public string? QrImageUrl { get; set; }
+    public string? PlanCode { get; set; }
+    public int? PlanDays { get; set; }
+    public long? PlanPrice { get; set; }
 
     public DateTimeOffset? ExpiredAt { get; set; }
     public DateTimeOffset? PaidAt { get; set; }

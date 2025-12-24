@@ -14,6 +14,8 @@ public class ApplicationUser : IdentityUser<Guid>
     public DateOnly? ExamDate { get; set; }
     public string SubscriptionType { get; set; } = "free";
     public DateTime? SubscriptionExpiresAt { get; set; }
+    public string? SubscriptionPlanCode { get; set; }
+    public int? SubscriptionPlanDays { get; set; }
     public bool EmailVerified { get; set; } = false;
     public bool IsActive { get; set; } = true;
     public DateTime? LastLoginAt { get; set; }

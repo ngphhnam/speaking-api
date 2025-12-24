@@ -16,4 +16,7 @@ public record UserDto(
     int LongestStreak = 0,
     DateOnly? LastPracticeDate = null,
     int TotalPracticeDays = 0,
-    string SubscriptionType = "free");
+    string SubscriptionType = "free",
+    DateTime? SubscriptionExpiresAt = null,
+    string? SubscriptionPlanCode = null,
+    int? SubscriptionPlanDays = null);

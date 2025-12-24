@@ -32,13 +32,17 @@ public class PaymentService(
         CreatePremiumPaymentRequest request,
         CancellationToken ct)
     {
+        var planCode = string.IsNullOrWhiteSpace(request.PlanCode) ? "premium_1m" : request.PlanCode!;
+        var planDays = ResolvePlanDays(planCode);
+        var planPrice = request.Amount ?? ResolvePlanPrice(planCode, planDays);
+
         // PayOS yêu cầu orderCode là số nguyên dương, <= 9007199254740991
         // -> dùng timestamp milliseconds để vừa duy nhất vừa đúng constraint.
         // (Nếu sau này cần map userId <-> orderCode, ta lưu mapping trong DB thay vì nhét vào chuỗi orderCode)
         long orderCode = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         // Default amount if not provided – you can adjust this to your real premium price
-        var amount = request.Amount ?? 10000; // example: 100,000 VND
+        var amount = planPrice; // example pricing based on plan
 
         // PayOS giới hạn description tối đa 25 ký tự
         var description = GenerateDescription();
@@ -197,6 +201,9 @@ public class PaymentService(
             CheckoutUrl = checkoutUrl,
             QrCode = qrCode,
             QrImageUrl = qrImageUrl,
+            PlanCode = planCode,
+            PlanDays = planDays,
+            PlanPrice = planPrice,
             ExpiredAt = DateTimeOffset.FromUnixTimeSeconds(expiredAt),
             ProviderResponse = rawResponse,
             CreatedAt = now,
@@ -217,7 +224,10 @@ public class PaymentService(
             ExpiredAt = DateTimeOffset.FromUnixTimeSeconds(expiredAt),
             BankAccountName = dataElement.TryGetProperty("accountName", out var accNameProp) ? accNameProp.GetString() : null,
             BankAccountNumber = dataElement.TryGetProperty("accountNumber", out var accNumProp) ? accNumProp.GetString() : null,
-            Description = description
+            Description = description,
+            PlanCode = planCode,
+            PlanDays = planDays,
+            PlanPrice = planPrice
         };
     }
 
@@ -347,6 +357,9 @@ public class PaymentService(
         {
             user.SubscriptionExpiresAt = now.AddDays(_options.PremiumDays);
         }
+        // Update plan info from payment if available
+        user.SubscriptionPlanCode = payment.PlanCode ?? user.SubscriptionPlanCode;
+        user.SubscriptionPlanDays = payment.PlanDays ?? user.SubscriptionPlanDays;
 
         user.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -428,6 +441,24 @@ public class PaymentService(
         // Random-ish suffix to avoid identical descriptions while staying under 25 chars
         var rnd = Random.Shared.Next(1000, 9999);
         return $"Nâng cấp premium #{rnd}".Substring(0, Math.Min(25, $"Nâng cấp premium #{rnd}".Length));
+    }
+
+    private static int ResolvePlanDays(string planCode)
+    {
+        return planCode switch
+        {
+            "premium_3m" => 90,
+            "premium_6m" => 180,
+            "premium_12m" => 365,
+            _ => 30 // premium_1m default
+        };
+    }
+
+    private static long ResolvePlanPrice(string planCode, int planDays)
+    {
+        // Simple pricing model: 10_000 VND per 30 days, proportional to planDays. Adjust as needed.
+        var pricePer30Days = 10_000L;
+        return pricePer30Days * planDays / 30;
     }
 
     private Task BroadcastPaymentStatusAsync(Guid userId, Payment payment, CancellationToken ct)
