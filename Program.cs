@@ -257,6 +257,7 @@ builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
 builder.Services.AddScoped<IVocabularyRepository, VocabularyRepository>();
 builder.Services.AddScoped<IUserVocabularyRepository, UserVocabularyRepository>();
 builder.Services.AddScoped<IAchievementRepository, AchievementRepository>();
+builder.Services.AddScoped<IStreakHistoryRepository, StreakHistoryRepository>();
 builder.Services.AddScoped<IUserAchievementRepository, UserAchievementRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IApiUsageLogRepository, ApiUsageLogRepository>();
@@ -268,6 +269,7 @@ builder.Services.AddScoped<IContentGenerationService, ContentGenerationService>(
 builder.Services.AddScoped<IRefinementService, RefinementService>();
 builder.Services.AddScoped<IDraftService, DraftService>();
 builder.Services.AddScoped<IStreakService, StreakService>();
+builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 var app = builder.Build();
@@ -291,7 +293,16 @@ if (args.Contains("--seed"))
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+    
+    // Seed users first (required for other data)
+    await SpeakingPractice.Api.DataSeed.UsersSeeder.SeedAsync(userManager, roleManager);
+    
+    // Then seed other data
     await SpeakingPractice.Api.DataSeed.IELTSTopicsSeeder.SeedAsync(context);
+    await SpeakingPractice.Api.DataSeed.AchievementsSeeder.SeedAsync(context);
+    await SpeakingPractice.Api.DataSeed.UserVocabularyAndStreakSeeder.SeedAsync(context);
 }
 
 app.Run();

@@ -1,11 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using SpeakingPractice.Api.Domain.Entities;
 using SpeakingPractice.Api.Infrastructure.Persistence;
+using SpeakingPractice.Api.Repositories;
 using SpeakingPractice.Api.Services.Interfaces;
 
 namespace SpeakingPractice.Api.Services;
 
 public class StreakService(
     ApplicationDbContext context,
+    IStreakHistoryRepository streakHistoryRepository,
     ILogger<StreakService> logger) : IStreakService
 {
     public async Task<StreakUpdateResult> UpdateStreakAsync(
@@ -33,11 +36,16 @@ public class StreakService(
 
         if (lastPractice is null)
         {
-            // First time practicing
+            // First time practicing - start new streak
+            await EndActiveStreakIfExistsAsync(userId, lastPractice ?? today, ct);
+            
             user.CurrentStreak = 1;
             user.LongestStreak = 1;
             user.TotalPracticeDays = 1;
             user.LastPracticeDate = today;
+            
+            // Create new streak history
+            await CreateStreakHistoryAsync(userId, today, 1, ct);
             
             result.CurrentStreak = 1;
             result.LongestStreak = 1;
@@ -68,6 +76,9 @@ public class StreakService(
                 user.TotalPracticeDays += 1;
                 user.LastPracticeDate = today;
                 
+                // Update active streak history
+                await UpdateActiveStreakAsync(userId, user.CurrentStreak, ct);
+                
                 if (user.CurrentStreak > user.LongestStreak)
                 {
                     user.LongestStreak = user.CurrentStreak;
@@ -88,6 +99,42 @@ public class StreakService(
                     userId, 
                     user.CurrentStreak);
             }
+            else if (daysDifference == 2)
+            {
+                // Missed 1 day - allow recovery (khôi phục streak)
+                logger.LogInformation(
+                    "User {UserId} recovered streak after missing 1 day. Old streak: {OldStreak}",
+                    userId,
+                    user.CurrentStreak);
+                
+                // End previous streak
+                await EndActiveStreakIfExistsAsync(userId, lastPractice.Value, ct);
+                
+                // Continue streak (không reset)
+                user.CurrentStreak += 1;
+                user.TotalPracticeDays += 1;
+                user.LastPracticeDate = today;
+                
+                // Create new streak history (continuing from previous)
+                await CreateStreakHistoryAsync(userId, lastPractice.Value.AddDays(1), user.CurrentStreak, ct);
+                
+                if (user.CurrentStreak > user.LongestStreak)
+                {
+                    user.LongestStreak = user.CurrentStreak;
+                    result.IsNewRecord = true;
+                }
+                
+                result.CurrentStreak = user.CurrentStreak;
+                result.LongestStreak = user.LongestStreak;
+                result.TotalPracticeDays = user.TotalPracticeDays;
+                result.StreakContinued = true;
+                result.StreakRecovered = true;
+                
+                logger.LogInformation(
+                    "User {UserId} recovered and continued streak: {Streak} days", 
+                    userId, 
+                    user.CurrentStreak);
+            }
             else
             {
                 // Streak broken - reset to 1
@@ -97,9 +144,16 @@ public class StreakService(
                     user.CurrentStreak,
                     daysDifference - 1);
                 
+                // End previous streak
+                await EndActiveStreakIfExistsAsync(userId, lastPractice.Value, ct);
+                
+                // Start new streak
                 user.CurrentStreak = 1;
                 user.TotalPracticeDays += 1;
                 user.LastPracticeDate = today;
+                
+                // Create new streak history
+                await CreateStreakHistoryAsync(userId, today, 1, ct);
                 
                 result.CurrentStreak = 1;
                 result.LongestStreak = user.LongestStreak;
@@ -160,6 +214,60 @@ public class StreakService(
         }
 
         return usersToReset.Count;
+    }
+
+    private async Task EndActiveStreakIfExistsAsync(Guid userId, DateOnly endDate, CancellationToken ct)
+    {
+        var activeStreak = await streakHistoryRepository.GetActiveStreakByUserIdAsync(userId, ct);
+        if (activeStreak != null)
+        {
+            activeStreak.IsActive = false;
+            activeStreak.EndDate = endDate;
+            activeStreak.UpdatedAt = DateTimeOffset.UtcNow;
+            await streakHistoryRepository.UpdateAsync(activeStreak, ct);
+        }
+    }
+
+    private async Task CreateStreakHistoryAsync(Guid userId, DateOnly startDate, int streakLength, CancellationToken ct)
+    {
+        var streakHistory = new StreakHistory
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            StartDate = startDate,
+            EndDate = startDate, // Will be updated when streak ends
+            StreakLength = streakLength,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        
+        await streakHistoryRepository.AddAsync(streakHistory, ct);
+    }
+
+    private async Task UpdateActiveStreakAsync(Guid userId, int newStreakLength, CancellationToken ct)
+    {
+        var activeStreak = await streakHistoryRepository.GetActiveStreakByUserIdAsync(userId, ct);
+        if (activeStreak != null)
+        {
+            activeStreak.StreakLength = newStreakLength;
+            activeStreak.UpdatedAt = DateTimeOffset.UtcNow;
+            await streakHistoryRepository.UpdateAsync(activeStreak, ct);
+        }
+    }
+
+    public async Task<IReadOnlyCollection<StreakHistoryDto>> GetStreakHistoryAsync(Guid userId, CancellationToken ct = default)
+    {
+        var histories = await streakHistoryRepository.GetByUserIdAsync(userId, ct);
+        return histories.Select(h => new StreakHistoryDto
+        {
+            Id = h.Id,
+            StreakLength = h.StreakLength,
+            StartDate = h.StartDate,
+            EndDate = h.EndDate,
+            IsActive = h.IsActive,
+            CreatedAt = h.CreatedAt
+        }).ToList();
     }
 }
 

@@ -31,6 +31,11 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Property(u => u.LastPracticeDate).HasColumnName("last_practice_date");
         builder.Property(u => u.TotalPracticeDays).HasColumnName("total_practice_days").HasDefaultValue(0);
         
+        // Level system
+        builder.Property(u => u.Level).HasColumnName("level").HasDefaultValue(1);
+        builder.Property(u => u.ExperiencePoints).HasColumnName("experience_points").HasDefaultValue(0);
+        builder.Property(u => u.TotalPoints).HasColumnName("total_points").HasDefaultValue(0);
+        
         builder.Property(u => u.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(u => u.UpdatedAt).HasColumnName("updated_at").IsRequired();
 

@@ -26,6 +26,11 @@ public class ApplicationUser : IdentityUser<Guid>
     public DateOnly? LastPracticeDate { get; set; }
     public int TotalPracticeDays { get; set; } = 0;
     
+    // Level system
+    public int Level { get; set; } = 1;
+    public int ExperiencePoints { get; set; } = 0; // XP từ achievements và practice
+    public int TotalPoints { get; set; } = 0; // Tổng điểm từ achievements
+    
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 

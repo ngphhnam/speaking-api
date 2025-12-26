@@ -11,6 +11,8 @@ using SpeakingPractice.Api.Infrastructure.Clients;
 using SpeakingPractice.Api.Infrastructure.Exceptions;
 using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Repositories;
+using SpeakingPractice.Api.Services.Interfaces;
+using SpeakingPractice.Api.Services;
 
 namespace SpeakingPractice.Api.Controllers;
 
@@ -24,6 +26,8 @@ public class AnswersController(
     IRecordingRepository recordingRepository,
     IAnalysisResultRepository analysisResultRepository,
     ISpeakingSessionRepository speakingSessionRepository,
+    IStreakService streakService,
+    IAchievementService achievementService,
     UserManager<ApplicationUser> userManager,
     ILogger<AnswersController> logger) : ControllerBase
 {
@@ -63,6 +67,27 @@ public class AnswersController(
         if (user is null)
         {
             return this.ApiUnauthorized(ErrorCodes.UNAUTHORIZED, "User not found");
+        }
+
+        // Check daily practice limit for free users before processing (24-hour rolling window)
+        if (!IsPremiumUser(user))
+        {
+            const int freeUserDailyLimit = 5;
+            var now = DateTimeOffset.UtcNow;
+            var practiceCountInLast24Hours = await speakingSessionRepository.CountPracticeSessionsInLast24HoursAsync(userId, now, ct);
+
+            if (practiceCountInLast24Hours >= freeUserDailyLimit)
+            {
+                // Find the oldest practice session in the last 24 hours to calculate when limit resets
+                var oldestSession = await speakingSessionRepository.GetOldestSessionInLast24HoursAsync(userId, now, ct);
+                var resetTime = oldestSession?.CreatedAt.AddHours(24) ?? now.AddHours(24);
+                var hoursUntilReset = (resetTime - now).TotalHours;
+                
+                return this.ApiBadRequest(
+                    ErrorCodes.DAILY_PRACTICE_LIMIT_REACHED,
+                    $"Free users are limited to {freeUserDailyLimit} practice sessions per 24 hours. " +
+                    $"You can practice again in approximately {Math.Ceiling(hoursUntilReset)} hours. Upgrade to Premium for unlimited access.");
+            }
         }
 
         try
@@ -192,6 +217,61 @@ public class AnswersController(
             await questionRepository.UpdateAsync(question, ct);
             await questionRepository.SaveChangesAsync(ct);
 
+            // Update streak when user completes a question (chỉ tăng khi hoàn thành câu hỏi)
+            try
+            {
+                var streakResult = await streakService.UpdateStreakAsync(userId, null, ct);
+                
+                if (streakResult.IsNewRecord)
+                {
+                    logger.LogInformation(
+                        "User {UserId} achieved new longest streak: {Streak} days!", 
+                        userId, 
+                        streakResult.CurrentStreak);
+                }
+                else if (streakResult.StreakRecovered)
+                {
+                    logger.LogInformation(
+                        "User {UserId} recovered their streak: {Streak} days", 
+                        userId, 
+                        streakResult.CurrentStreak);
+                }
+                else if (streakResult.StreakContinued)
+                {
+                    logger.LogInformation(
+                        "User {UserId} continued their streak: {Streak} days", 
+                        userId, 
+                        streakResult.CurrentStreak);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Don't fail the answer submission if streak update fails
+                logger.LogError(ex, "Failed to update streak for user {UserId}", userId);
+            }
+
+            // Check and award achievements
+            try
+            {
+                var awardedAchievements = await achievementService.CheckAndAwardAchievementsAsync(
+                    userId, 
+                    llamaResult.BandScore, 
+                    ct);
+                
+                if (awardedAchievements.Count > 0)
+                {
+                    logger.LogInformation(
+                        "User {UserId} earned {Count} achievement(s)",
+                        userId,
+                        awardedAchievements.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Don't fail the answer submission if achievement check fails
+                logger.LogError(ex, "Failed to check achievements for user {UserId}", userId);
+            }
+
             logger.LogInformation("Submitted answer for question {QuestionId}, score: {Score}", questionId, llamaResult.BandScore);
 
             var responseData = new
@@ -253,6 +333,24 @@ public class AnswersController(
             < 6.0m => "intermediate",
             _ => "advanced"
         };
+    }
+
+    private static bool IsPremiumUser(ApplicationUser user)
+    {
+        // User is premium if subscription type is "premium" and subscription hasn't expired
+        if (user.SubscriptionType?.ToLowerInvariant() != "premium")
+        {
+            return false;
+        }
+
+        // If no expiration date, subscription is permanent
+        if (!user.SubscriptionExpiresAt.HasValue)
+        {
+            return true;
+        }
+
+        // Check if subscription is still valid
+        return user.SubscriptionExpiresAt.Value > DateTime.UtcNow;
     }
 }
 

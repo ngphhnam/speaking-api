@@ -43,6 +43,45 @@ public class SpeakingSessionRepository(ApplicationDbContext context) : ISpeaking
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(ct);
 
+    public async Task<int> CountDailyPracticeSessionsAsync(Guid userId, DateOnly date, CancellationToken ct)
+    {
+        // Convert DateOnly to DateTimeOffset for proper comparison with CreatedAt (DateTimeOffset)
+        var startOfDay = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var endOfDay = new DateTimeOffset(date.ToDateTime(TimeOnly.MaxValue), TimeSpan.Zero);
+        
+        return await context.PracticeSessions
+            .AsNoTracking()
+            .Where(s => s.UserId == userId 
+                && s.CreatedAt >= startOfDay 
+                && s.CreatedAt <= endOfDay)
+            .CountAsync(ct);
+    }
+
+    public async Task<int> CountPracticeSessionsInLast24HoursAsync(Guid userId, DateTimeOffset fromTime, CancellationToken ct)
+    {
+        var twentyFourHoursAgo = fromTime.AddHours(-24);
+        
+        return await context.PracticeSessions
+            .AsNoTracking()
+            .Where(s => s.UserId == userId 
+                && s.CreatedAt > twentyFourHoursAgo 
+                && s.CreatedAt <= fromTime)
+            .CountAsync(ct);
+    }
+
+    public Task<PracticeSession?> GetOldestSessionInLast24HoursAsync(Guid userId, DateTimeOffset fromTime, CancellationToken ct)
+    {
+        var twentyFourHoursAgo = fromTime.AddHours(-24);
+        
+        return context.PracticeSessions
+            .AsNoTracking()
+            .Where(s => s.UserId == userId 
+                && s.CreatedAt > twentyFourHoursAgo 
+                && s.CreatedAt <= fromTime)
+            .OrderBy(s => s.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+    }
+
     public Task UpdateAsync(PracticeSession entity, CancellationToken ct)
     {
         context.PracticeSessions.Update(entity);

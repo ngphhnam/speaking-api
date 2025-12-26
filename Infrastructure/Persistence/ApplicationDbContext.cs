@@ -21,6 +21,7 @@ public class ApplicationDbContext(
     public DbSet<UserProgress> UserProgresses => Set<UserProgress>();
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
+    public DbSet<StreakHistory> StreakHistories => Set<StreakHistory>();
     
     // Vocabulary & learning
     public DbSet<Vocabulary> Vocabularies => Set<Vocabulary>();

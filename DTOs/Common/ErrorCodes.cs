@@ -36,6 +36,7 @@ public static class ErrorCodes
     public const string SESSION_NOT_BELONGS_TO_USER = "BIZ_003";
     public const string INVALID_SESSION_STATUS = "BIZ_004";
     public const string TOPIC_NOT_ACTIVE = "BIZ_005";
+    public const string DAILY_PRACTICE_LIMIT_REACHED = "BIZ_006";
 
     // File/Upload Errors (5000-5999)
     public const string FILE_REQUIRED = "FILE_001";

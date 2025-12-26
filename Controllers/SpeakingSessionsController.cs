@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.SpeakingSessions;
+using SpeakingPractice.Api.Infrastructure.Exceptions;
 using SpeakingPractice.Api.Infrastructure.Extensions;
 using SpeakingPractice.Api.Services.Interfaces;
 
@@ -37,6 +38,8 @@ public class SpeakingSessionsController(
                 "User not authenticated");
         }
 
+        try
+        {
         var result = await speakingSessionService.CreateSessionAsync(
             request,
             userId.Value,
@@ -48,6 +51,11 @@ public class SpeakingSessionsController(
             new { id = result.Id },
             result,
             "Speaking session created successfully");
+        }
+        catch (BusinessRuleException ex)
+        {
+            return this.ApiBadRequest(ex.ErrorCode, ex.Message);
+        }
     }
 
     [HttpGet]

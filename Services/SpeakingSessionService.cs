@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Identity;
 using SpeakingPractice.Api.Domain.Entities;
+using SpeakingPractice.Api.DTOs.Common;
 using SpeakingPractice.Api.DTOs.SpeakingSessions;
 using SpeakingPractice.Api.Infrastructure.Clients;
+using SpeakingPractice.Api.Infrastructure.Exceptions;
 using SpeakingPractice.Api.Repositories;
 using SpeakingPractice.Api.Services.Interfaces;
 
@@ -14,7 +17,7 @@ public class SpeakingSessionService(
     ISpeakingSessionRepository sessionRepository,
     IRecordingRepository recordingRepository,
     IAnalysisResultRepository analysisResultRepository,
-    IStreakService streakService,
+    UserManager<ApplicationUser> userManager,
     ILogger<SpeakingSessionService> logger) : ISpeakingSessionService
 {
     public async Task<SpeakingSessionDto> CreateSessionAsync(
@@ -22,6 +25,9 @@ public class SpeakingSessionService(
         Guid userId,
         CancellationToken ct)
     {
+        // Check daily practice limit for free users
+        await CheckDailyPracticeLimitAsync(userId, ct);
+
         var now = DateTimeOffset.UtcNow;
 
         var session = new PracticeSession
@@ -40,37 +46,8 @@ public class SpeakingSessionService(
         await sessionRepository.AddAsync(session, ct);
         await sessionRepository.SaveChangesAsync(ct);
 
-        // Update user streak when they start a practice session
-        try
-        {
-            var streakResult = await streakService.UpdateStreakAsync(userId, null, ct);
-            
-            if (streakResult.IsNewRecord)
-            {
-                logger.LogInformation(
-                    "User {UserId} achieved new longest streak: {Streak} days!", 
-                    userId, 
-                    streakResult.CurrentStreak);
-            }
-            else if (streakResult.StreakContinued)
-            {
-                logger.LogInformation(
-                    "User {UserId} continued their streak: {Streak} days", 
-                    userId, 
-                    streakResult.CurrentStreak);
-            }
-            else if (streakResult.StreakBroken)
-            {
-                logger.LogInformation(
-                    "User {UserId} restarted their streak after a break", 
-                    userId);
-            }
-        }
-        catch (Exception ex)
-        {
-            // Don't fail the session creation if streak update fails
-            logger.LogError(ex, "Failed to update streak for user {UserId}", userId);
-        }
+        // Note: Streak chỉ được update khi user hoàn thành câu hỏi (trong AnswersController),
+        // không update khi tạo session
 
         logger.LogInformation("Created speaking practice session {SessionId} for user {UserId}", session.Id, userId);
 
@@ -146,5 +123,56 @@ public class SpeakingSessionService(
         CreatedAt = session.CreatedAt,
         UpdatedAt = session.UpdatedAt
     };
+
+    private async Task CheckDailyPracticeLimitAsync(Guid userId, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            throw new InvalidOperationException($"User with id {userId} not found");
+        }
+
+        // Premium users have unlimited access
+        if (IsPremiumUser(user))
+        {
+            return;
+        }
+
+        // Free users are limited to 5 practice sessions per 24 hours (rolling window)
+        const int freeUserDailyLimit = 5;
+        var now = DateTimeOffset.UtcNow;
+        var practiceCountInLast24Hours = await sessionRepository.CountPracticeSessionsInLast24HoursAsync(userId, now, ct);
+
+        if (practiceCountInLast24Hours >= freeUserDailyLimit)
+        {
+            // Find the oldest practice session in the last 24 hours to calculate when limit resets
+            var oldestSession = await sessionRepository.GetOldestSessionInLast24HoursAsync(userId, now, ct);
+            var resetTime = oldestSession?.CreatedAt.AddHours(24) ?? now.AddHours(24);
+            var hoursUntilReset = (resetTime - now).TotalHours;
+            
+            throw new BusinessRuleException(
+                ErrorCodes.DAILY_PRACTICE_LIMIT_REACHED,
+                $"Free users are limited to {freeUserDailyLimit} practice sessions per 24 hours. " +
+                $"You can practice again in approximately {Math.Ceiling(hoursUntilReset)} hours. Upgrade to Premium for unlimited access.");
+        }
+    }
+
+    private static bool IsPremiumUser(ApplicationUser user)
+    {
+        // User is premium if subscription type is "premium" and subscription hasn't expired
+        if (user.SubscriptionType?.ToLowerInvariant() != "premium")
+        {
+            return false;
+        }
+
+        // If no expiration date, subscription is permanent
+        if (!user.SubscriptionExpiresAt.HasValue)
+        {
+            return true;
+        }
+
+        // Check if subscription is still valid
+        return user.SubscriptionExpiresAt.Value > DateTime.UtcNow;
+    }
 }
 
