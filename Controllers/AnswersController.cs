@@ -1,5 +1,6 @@
 using System.Net;
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -105,16 +106,11 @@ public class AnswersController(
             var transcription = await whisperClient.TranscribeAsync(memoryStream, audio.FileName, ct);
 
             // Score with Llama
-            var topicTitle = question.Topic?.Title ?? "General";
-            var level = question.EstimatedBandRequirement.HasValue && question.EstimatedBandRequirement.Value > 0
-                ? GetLevelFromBand(question.EstimatedBandRequirement.Value) 
-                : "intermediate";
-            
             var llamaResult = await llamaClient.ScoreAsync(
                 transcription.Text, 
                 question.QuestionText,
-                topicTitle, 
-                level, 
+                transcription.Language ?? "en",
+                "vi",
                 ct);
 
             // Correct grammar (optional - continue if it fails)
@@ -218,9 +214,10 @@ public class AnswersController(
             await questionRepository.SaveChangesAsync(ct);
 
             // Update streak when user completes a question (chỉ tăng khi hoàn thành câu hỏi)
+            StreakUpdateResult? streakResult = null;
             try
             {
-                var streakResult = await streakService.UpdateStreakAsync(userId, null, ct);
+                streakResult = await streakService.UpdateStreakAsync(userId, null, ct);
                 
                 if (streakResult.IsNewRecord)
                 {
@@ -274,12 +271,31 @@ public class AnswersController(
 
             logger.LogInformation("Submitted answer for question {QuestionId}, score: {Score}", questionId, llamaResult.BandScore);
 
+            // Note: Translation removed from main flow to improve response time
+            // Feedback is returned in English. Translation can be done client-side or via separate endpoint if needed.
+
+            // Build streak info if streak was updated
+            object? streakInfo = null;
+            if (streakResult != null)
+            {
+                // Always return streak info so frontend can display current streak
+                streakInfo = new
+                {
+                    currentStreak = streakResult.CurrentStreak,
+                    longestStreak = streakResult.LongestStreak,
+                    totalPracticeDays = streakResult.TotalPracticeDays,
+                    isNewRecord = streakResult.IsNewRecord,
+                    streakContinued = streakResult.StreakContinued,
+                    streakRecovered = streakResult.StreakRecovered,
+                    streakBroken = streakResult.StreakBroken
+                };
+            }
+
             var responseData = new
             {
                 recordingId = recording.Id,
                 analysisResultId = analysisResult.Id,
                 transcription = transcription.Text,
-                correctedTranscription = grammarCorrection?.Corrected,
                 scores = new
                 {
                     overallBandScore = llamaResult.BandScore,
@@ -297,7 +313,8 @@ public class AnswersController(
                     explanation = grammarCorrection.Explanation
                 } : null,
                 sampleAnswers = question.SampleAnswers,
-                keyVocabulary = question.KeyVocabulary
+                keyVocabulary = question.KeyVocabulary,
+                streak = streakInfo // Thêm thông tin streak vào response
             };
 
             return this.ApiOk(responseData, "Answer submitted successfully");
@@ -323,16 +340,6 @@ public class AnswersController(
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         return Guid.TryParse(userId, out var guid) ? guid : null;
-    }
-
-    private static string GetLevelFromBand(decimal bandScore)
-    {
-        return bandScore switch
-        {
-            < 4.0m => "beginner",
-            < 6.0m => "intermediate",
-            _ => "advanced"
-        };
     }
 
     private static bool IsPremiumUser(ApplicationUser user)

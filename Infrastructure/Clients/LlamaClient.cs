@@ -25,15 +25,15 @@ public class LlamaClient(HttpClient httpClient, ILogger<LlamaClient> logger) : I
         .Or<TaskCanceledException>()
         .WaitAndRetryAsync(1, _ => TimeSpan.FromSeconds(1)); // Only 1 retry for network issues, not backend errors
 
-    public Task<LlamaScoreResult> ScoreAsync(string transcription, string questionText, string topic, string level, CancellationToken ct)
+    public Task<LlamaScoreResult> ScoreAsync(string transcription, string questionText, string language, string feedbackLanguage, CancellationToken ct)
         => _retryPolicy.ExecuteAsync(async token =>
         {
             var payload = new
             {
                 transcription,
                 questionText,
-                topic,
-                level
+                language,
+                feedbackLanguage
             };
 
                 var response = await httpClient.PostAsJsonAsync("/api/v2/score", payload, SerializerOptions, token);
